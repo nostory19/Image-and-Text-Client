@@ -1,6 +1,7 @@
 package com.example.myapplication;
 
 import android.os.Bundle;
+import android.view.View;
 import android.widget.LinearLayout;
 
 import androidx.activity.EdgeToEdge;
@@ -15,6 +16,8 @@ import androidx.fragment.app.FragmentTransaction;
 public class MainActivity extends AppCompatActivity {
     private LinearLayout tabHome, tabFriends, tabCamera, tabMessage, tabMine;
     private FragmentManager fragmentManager;
+
+    private LinearLayout bottomNavigation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,6 +49,8 @@ public class MainActivity extends AppCompatActivity {
         tabCamera = findViewById(R.id.tab_camera);
         tabMessage = findViewById(R.id.tab_message);
         tabMine = findViewById(R.id.tab_mine);
+        // 初始化底部导航栏引用
+        bottomNavigation = findViewById(R.id.bottom_navigation);
     }
 
     private void switchFragment(Fragment fragment){
@@ -60,5 +65,12 @@ public class MainActivity extends AppCompatActivity {
 //        tabCamera.setOnClickListener(v -> switchFragment(new CameraFragment()));
 //        tabMessage.setOnClickListener(v -> switchFragment(new MessageFragment()));
 //        tabMine.setOnClickListener(v -> switchFragment(new MineFragment()));
+    }
+
+    // 添加控制底部导航栏显示和隐藏的方法
+    public void showBottomNavigation(boolean show) {
+        if (bottomNavigation != null) {
+            bottomNavigation.setVisibility(show ? View.VISIBLE : View.GONE);
+        }
     }
 }
