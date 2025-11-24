@@ -10,13 +10,15 @@
     tools:context=".MainActivity">
 
     <!-- Fragment容器 -->
+
+    <!-- 底部导航栏 -->
+
     <FrameLayout
         android:id="@+id/fragment_container"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1" />
 
-    <!-- 底部导航栏 -->
     <include
         android:id="@+id/bottom_navigation"
         layout="@layout/bottom_navigation"

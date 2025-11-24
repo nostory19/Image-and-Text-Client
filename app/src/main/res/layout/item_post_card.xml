@@ -46,7 +46,6 @@
                 android:id="@+id/author_avatar"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:src="@android:drawable/ic_menu_person"
                 android:tint="#999999" />
 
             <!-- 作者昵称 -->
