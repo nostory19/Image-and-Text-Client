@@ -2,13 +2,20 @@ package com.example.myapplication;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.Outline;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewOutlineProvider;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -19,6 +26,9 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
+import androidx.core.graphics.drawable.RoundedBitmapDrawable;
+import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
@@ -104,10 +114,37 @@ public class PostDetailFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        // 确保头像显示为圆形
+
 
         // 初始化视图组件
         initViews(view);
+        if (authorAvatar != null) {
+            // 创建圆形背景
+            GradientDrawable circleDrawable = new GradientDrawable();
+            circleDrawable.setShape(GradientDrawable.OVAL);
+            circleDrawable.setColor(Color.TRANSPARENT);
+            circleDrawable.setStroke(1, Color.TRANSPARENT);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                authorAvatar.setBackground(circleDrawable);
+            } else {
+                authorAvatar.setBackgroundDrawable(circleDrawable);
+            }
 
+            // 使用RoundedBitmapDrawable确保图片也是圆形的
+            Drawable drawable = ContextCompat.getDrawable(getContext(), R.drawable.user_avatar);
+            if (drawable instanceof BitmapDrawable) {
+                Bitmap bitmap = ((BitmapDrawable) drawable).getBitmap();
+                RoundedBitmapDrawable roundedBitmapDrawable = RoundedBitmapDrawableFactory.create(getResources(), bitmap);
+                roundedBitmapDrawable.setCircular(true);
+                authorAvatar.setImageDrawable(roundedBitmapDrawable);
+            }
+
+            // 添加额外的null检查
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                authorAvatar.setClipToOutline(true);
+            }
+        }
         // 设置数据
         setupData();
 

@@ -18,13 +18,13 @@
         <!-- 返回按钮 -->
         <ImageView
             android:id="@+id/back_button"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="35dp"
+            android:layout_height="wrap_content"
             android:padding="12dp"
-            android:src="@android:drawable/ic_media_previous"
+            android:src="@drawable/back_icon"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent" />
+            app:layout_constraintTop_toTopOf="parent" />
 
         <!-- 作者信息 -->
         <ImageView
@@ -32,14 +32,13 @@
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:layout_marginStart="8dp"
-            android:background="#E0E0E0"
-            android:clipToOutline="true"
-            android:contentDescription="作者头像"
-            app:layout_constraintStart_toEndOf="@id/back_button"
-            app:layout_constraintTop_toTopOf="parent"
+            android:contentDescription="作者信息"
+            android:scaleType="centerCrop"
+            android:src="@drawable/user_avatar"
             app:layout_constraintBottom_toBottomOf="parent"
-            tools:src="@android:drawable/ic_menu_add" />
-<!--         需要修改为ic_menu_person-->
+            app:layout_constraintStart_toEndOf="@id/back_button"
+            app:layout_constraintTop_toTopOf="parent" />
+        <!--         需要修改为ic_menu_person-->
 
         <TextView
             android:id="@+id/author_name"
@@ -49,25 +48,33 @@
             android:layout_marginEnd="8dp"
             android:textSize="16sp"
             android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@id/follow_button"
             app:layout_constraintStart_toEndOf="@id/author_avatar"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
             tools:text="作者名称" />
 
         <!-- 关注按钮 -->
+        <!-- 关注按钮 -->
         <Button
             android:id="@+id/follow_button"
-            android:layout_width="wrap_content"
-            android:layout_height="32dp"
+            android:layout_width="64dp"
+            android:layout_height="38dp"
             android:layout_marginEnd="16dp"
-            android:background="@drawable/follow_button_bg"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:minWidth="60dp"
+            android:paddingLeft="16dp"
+            android:paddingRight="16dp"
             android:text="关注"
-            android:textColor="#FFFFFF"
+            android:textColor="#000000"
             android:textSize="14sp"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent" />
+            app:layout_constraintTop_toTopOf="parent" />
+<!--        TODO,一加上background形状就变了-->
+<!--        android:background="@drawable/follow_button_bg"-->
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <!-- 内容区域 -->
@@ -136,9 +143,9 @@
                     android:id="@+id/post_title"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
                     android:textSize="20sp"
                     android:textStyle="bold"
-                    android:layout_marginBottom="8dp"
                     tools:text="作品标题" />
 
                 <!-- 正文 -->
@@ -146,9 +153,9 @@
                     android:id="@+id/post_content"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textSize="16sp"
-                    android:lineSpacingExtra="4dp"
                     android:layout_marginBottom="16dp"
+                    android:lineSpacingExtra="4dp"
+                    android:textSize="16sp"
                     tools:text="这是作品的详细内容..." />
 
                 <!-- 话题标签容器 -->
@@ -156,17 +163,17 @@
                     android:id="@+id/topic_container"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
                     android:layout_marginBottom="16dp"
-                    android:gravity="center_vertical" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal" />
 
                 <!-- 发布日期 -->
                 <TextView
                     android:id="@+id/post_date"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="14sp"
                     android:textColor="#999999"
+                    android:textSize="14sp"
                     tools:text="05-20" />
             </LinearLayout>
         </LinearLayout>
@@ -191,10 +198,10 @@
             android:hint="说点什么..."
             android:paddingHorizontal="12dp"
             android:textSize="14sp"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@id/like_button"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent" />
+            app:layout_constraintTop_toTopOf="parent" />
 
         <!-- 点赞按钮 -->
         <LinearLayout
@@ -204,26 +211,45 @@
             android:gravity="center"
             android:orientation="vertical"
             android:paddingHorizontal="12dp"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@id/comment_button"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent">
+            app:layout_constraintTop_toTopOf="parent">
 
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:src="@drawable/ic_s_s_heart_outlined_16"
-                android:contentDescription="点赞" />
+                android:contentDescription="点赞"
+                android:src="@drawable/like_icon" />
 
             <TextView
                 android:id="@+id/like_count"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="12sp"
                 android:layout_marginTop="2dp"
+                android:textSize="12sp"
                 tools:text="10" />
         </LinearLayout>
 
         <!-- 评论按钮 -->
+<!--        <LinearLayout-->
+<!--            android:id="@+id/comment_button"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="match_parent"-->
+<!--            android:gravity="center"-->
+<!--            android:orientation="vertical"-->
+<!--            android:paddingHorizontal="12dp"-->
+<!--            app:layout_constraintBottom_toBottomOf="parent"-->
+<!--            app:layout_constraintEnd_toStartOf="@id/collect_button"-->
+<!--            app:layout_constraintTop_toTopOf="parent">-->
+
+
+<!--            <ImageView-->
+<!--                android:layout_width="24dp"-->
+<!--                android:layout_height="24dp"-->
+<!--                android:contentDescription="评论"-->
+<!--                android:src="@android:drawable/ic_input_add" />-->
+<!--        </LinearLayout>-->
+
         <LinearLayout
             android:id="@+id/comment_button"
             android:layout_width="wrap_content"
@@ -231,15 +257,23 @@
             android:gravity="center"
             android:orientation="vertical"
             android:paddingHorizontal="12dp"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@id/collect_button"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent">
+            app:layout_constraintTop_toTopOf="parent">
 
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:src="@android:drawable/ic_input_add"
-                android:contentDescription="评论" />
+                android:contentDescription="评论"
+                android:src="@drawable/comment_icon" />
+
+            <TextView
+                android:id="@+id/like_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textSize="12sp"
+                tools:text="10" />
         </LinearLayout>
 
         <!-- 收藏按钮 -->
@@ -250,15 +284,22 @@
             android:gravity="center"
             android:orientation="vertical"
             android:paddingHorizontal="12dp"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@id/share_button"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent">
+            app:layout_constraintTop_toTopOf="parent">
 
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:src="@android:drawable/ic_menu_save"
-                android:contentDescription="收藏" />
+                android:contentDescription="收藏"
+                android:src="@drawable/star_icon" />
+            <TextView
+                android:id="@+id/like_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textSize="12sp"
+                tools:text="10" />
         </LinearLayout>
 
         <!-- 分享按钮 -->
@@ -269,15 +310,22 @@
             android:gravity="center"
             android:orientation="vertical"
             android:paddingHorizontal="12dp"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent">
+            app:layout_constraintTop_toTopOf="parent">
 
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:src="@android:drawable/ic_menu_share"
-                android:contentDescription="分享" />
+                android:contentDescription="分享"
+                android:src="@drawable/share_icon" />
+            <TextView
+                android:id="@+id/like_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textSize="12sp"
+                tools:text="10" />
         </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
 
