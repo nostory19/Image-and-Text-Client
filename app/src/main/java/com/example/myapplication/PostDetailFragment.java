@@ -453,7 +453,7 @@ public class PostDetailFragment extends Fragment {
 
         return new PostDetail(
                 "author_" + post.getAuthor(),
-                post.getAuthor(),
+                post.getAuthorName(),
                 post.getTitle(),
                 "这是作品的详细内容，这里可以展示完整的作品描述信息。" +
                         "用户可以在这里看到作者对作品的详细介绍。这是一个很长的文本，" +
