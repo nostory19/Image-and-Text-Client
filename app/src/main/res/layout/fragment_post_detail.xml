@@ -93,15 +93,17 @@
             android:orientation="vertical">
 
             <!-- 图片容器 -->
+<!--            移除固定高度，改为wrap_content-->
             <RelativeLayout
+                android:id="@+id/image_container"
                 android:layout_width="match_parent"
-                android:layout_height="300dp"> <!-- 设置固定高度 -->
+                android:layout_height="wrap_content"> <!-- 设置固定高度 -->
 
                 <!-- 图片ViewPager -->
                 <androidx.viewpager2.widget.ViewPager2
                     android:id="@+id/image_view_pager"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent" />
+                    android:layout_height="wrap_content" />
 
                 <!-- 进度指示器 -->
                 <LinearLayout

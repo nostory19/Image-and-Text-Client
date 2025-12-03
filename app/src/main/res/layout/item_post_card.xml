@@ -63,13 +63,20 @@
                 android:orientation="horizontal">
 
                 <!-- 作者头像 -->
+<!--                <ImageView-->
+<!--                    android:id="@+id/author_avatar"-->
+<!--                    android:layout_width="16dp"-->
+<!--                    android:layout_height="16dp"-->
+<!--                    android:shape="oval"-->
+<!--                    android:src="@drawable/user_avatar"-->
+<!--                    android:tint="#999999" />-->
+<!--                移除灰色tint-->
                 <ImageView
                     android:id="@+id/author_avatar"
                     android:layout_width="16dp"
                     android:layout_height="16dp"
                     android:shape="oval"
-                    android:src="@drawable/user_avatar"
-                    android:tint="#999999" />
+                    android:src="@drawable/user_avatar" />
 
                 <!-- 作者昵称 -->
                 <TextView
