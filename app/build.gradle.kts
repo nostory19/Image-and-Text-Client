@@ -74,6 +74,7 @@ dependencies {
 
     // 实现 ConstraintLayout 布局库
     implementation(libs.constraintlayout)
+    implementation(libs.swiperefreshlayout)
 
     // 测试依赖 - JUnit 测试框架
     testImplementation(libs.junit)

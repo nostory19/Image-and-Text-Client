@@ -12,14 +12,18 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
+import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.bumptech.glide.Glide;
 import com.example.myapplication.model.Post;
@@ -48,43 +52,204 @@ public class HomeFragment extends Fragment {
 
     private RecyclerView recyclerView;
     private PostAdapter postAdapter;
+    // 有关下拉刷新
+    private SwipeRefreshLayout swipeRefreshLayout;
+    private RelativeLayout emptyStateLayout;
+
+    private RelativeLayout loadingLayout;
+    private TextView emptyStateTip;
+
+    private Button retryButton;
 
     private List<Post> posts = new ArrayList<>();
 
+    // 分页加载相关变量
+
+    private boolean isLoading = false;
+
+    private boolean hasMoreData = true;
+
+    private boolean firstLoad = true; // 添加标志位，表示是否是首次加载
+    private int scrollPosition = 0; // 保存滚动位置
+    private boolean shouldRestorePosition = false; // 是否需要恢复位置
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         // 初始化数据列表
         posts = new ArrayList<>();
-        // 在Fragement创建时获取数据，而不是每次创建视图时获取
-        fetchDataFromApi();
     }
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_home, container, false);
-
-        // 初始化RecyclerView
-        RecyclerView recyclerView = view.findViewById(R.id.waterfall_recycler);
-
+    
+        // 初始化RecyclerView和其他视图
+        recyclerView = view.findViewById(R.id.waterfall_recycler);
+        swipeRefreshLayout = view.findViewById(R.id.swipe_refresh_layout);
+        emptyStateLayout = view.findViewById(R.id.empty_state_layout);
+        loadingLayout = view.findViewById(R.id.loading_layout);
+        emptyStateTip = view.findViewById(R.id.empty_state_tip);
+        retryButton = view.findViewById(R.id.retry_button);
+    
         // 设置瀑布流布局管理器，2列
         StaggeredGridLayoutManager layoutManager = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
         recyclerView.setLayoutManager(layoutManager);
-
-        // 创建测试数据
-//        List<Post> posts = generateTestPosts(10);
+    
         // 创建并设置适配器
-//        recyclerView.setAdapter(new PostAdapter(posts));
-
-        // 改为真实数据
         postAdapter = new PostAdapter(posts);
         recyclerView.setAdapter(postAdapter);
-        // 获取网络数据
-//        fetchDataFromApi();
-
+    
+        // 设置下拉刷新
+        swipeRefreshLayout.setOnRefreshListener(this::refreshData);
+        swipeRefreshLayout.setColorSchemeResources(R.color.colorAccent);
+        
+        // 设置重试按钮监听
+        retryButton.setOnClickListener(v -> refreshData());
+        
+        // 添加滚动监听，实现上滑加载更多
+        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                
+                // 只有在向下滚动且不在加载状态且还有更多数据时才触发加载更多
+                if (dy > 0 && !isLoading && hasMoreData) {
+                    StaggeredGridLayoutManager layoutManager = (StaggeredGridLayoutManager) recyclerView.getLayoutManager();
+                    if (layoutManager != null) {
+                        int[] lastVisibleItemPositions = layoutManager.findLastVisibleItemPositions(null);
+                        int lastVisibleItemPosition = getLastVisibleItem(lastVisibleItemPositions);
+                        
+                        // 当滑动到倒数第2个item时开始加载更多
+                        if (lastVisibleItemPosition >= postAdapter.getItemCount() - 2) {
+                            loadMoreData();
+                        }
+                    }
+                }
+            }
+            
+            @Override
+            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+                // 当滚动停止时，保存当前滚动位置
+                if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                    StaggeredGridLayoutManager layoutManager = (StaggeredGridLayoutManager) recyclerView.getLayoutManager();
+                    if (layoutManager != null && posts.size() > 0) {
+                        // 保存第一个可见item的位置
+                        int[] firstVisiblePositions = layoutManager.findFirstVisibleItemPositions(null);
+                        if (firstVisiblePositions.length > 0) {
+                            // 取最小的位置，确保是真正的第一个可见项
+                            int minPosition = firstVisiblePositions[0];
+                            for (int pos : firstVisiblePositions) {
+                                minPosition = Math.min(minPosition, pos);
+                            }
+                            scrollPosition = minPosition;
+                            shouldRestorePosition = true;
+                        }
+                    }
+                }
+            }
+        });
+        
+        // 首次加载数据
+        if (firstLoad) {
+            refreshData();
+            firstLoad = false;
+        }
+        
         return view;
     }
+    
+    // 刷新数据
+    private void refreshData() {
+        if (isLoading) return;
+        // 刷新时重置保存的位置
+        scrollPosition = 0;
+        shouldRestorePosition = false;
+        fetchDataFromApi(true); // true表示刷新
+    }
+    
+    // 修改onResume方法，不再重新加载数据，只更新点赞状态
+    @Override
+    public void onResume() {
+        super.onResume();
+        
+        // 从详情页返回时，应用本地存储的点赞状态
+        if (!posts.isEmpty()) {
+            applyLocalLikeStatus();
+            // 如果适配器存在，通知数据更新（但不重新加载整个列表）
+            if (postAdapter != null) {
+                postAdapter.notifyDataSetChanged();
+            }
+            
+            // 恢复之前的滚动位置
+            if (scrollPosition > 0 && recyclerView != null) {
+                StaggeredGridLayoutManager layoutManager = (StaggeredGridLayoutManager) recyclerView.getLayoutManager();
+                if (layoutManager != null) {
+                    recyclerView.post(() -> {
+                        // 为了更好的用户体验，可以滚动到比保存位置稍前的位置
+                        int positionToScroll = Math.max(0, scrollPosition - 2);
+                        layoutManager.scrollToPosition(positionToScroll);
+                    });
+                }
+            }
+        }
+    }
 
+    // 获取最后一个可见item的位置
+    private int getLastVisibleItem(int[] lastVisibleItemPositions) {
+        int maxSize = 0;
+        for (int i = 0; i < lastVisibleItemPositions.length; i++) {
+            if (i == 0) {
+                maxSize = lastVisibleItemPositions[i];
+            } else if (lastVisibleItemPositions[i] > maxSize) {
+                maxSize = lastVisibleItemPositions[i];
+            }
+        }
+        return maxSize;
+    }
+
+    // 加载更多数据
+    private void loadMoreData() {
+        if (isLoading || !hasMoreData) return;
+        fetchDataFromApi(false); // false表示加载更多
+    }
+    //显示或隐藏loading
+    private void showLoading(boolean show) {
+        isLoading = show;
+
+        if (show) {
+            // 刷新时显示全局loading
+            loadingLayout.setVisibility(View.VISIBLE);
+            swipeRefreshLayout.setRefreshing(false);
+        } else {
+            // 隐藏所有loading状态
+            loadingLayout.setVisibility(View.GONE);
+            swipeRefreshLayout.setRefreshing(false);
+            // 隐藏加载更多的Footer
+            if (postAdapter != null) {
+                postAdapter.showLoadingFooter(false);
+            }
+        }
+    }
+
+    // 刷新数据
+//    private void refreshData() {
+//        if (isLoading) return;
+//        fetchDataFromApi(true);
+//    }
+
+    // 根据数据显示空态页面
+    private void updateEmptyState(boolean hasData, boolean isError) {
+        if (hasData) {
+            emptyStateLayout.setVisibility(View.GONE);
+            swipeRefreshLayout.setVisibility(View.VISIBLE);
+        }else {
+            emptyStateLayout.setVisibility(View.VISIBLE);
+            swipeRefreshLayout.setVisibility(View.GONE);
+            emptyStateTip.setText(isError ? "加载失败，请重试" : "暂无内容");
+
+        }
+    }
     // 以前旧的生成测试数据
 //    private List<Post> generateTestPosts(int count) {
 //        List<Post> posts = new ArrayList<>();
@@ -120,9 +285,13 @@ public class HomeFragment extends Fragment {
     // 简单的Post数据模型类
 
     // 添加获取网络数据
-    private void fetchDataFromApi() {
-        Log.d("HomeFragment", "开始获取网络数据...");
+    private void fetchDataFromApi(boolean isRefresh) {
+//        Log.d("HomeFragment", "开始获取网络数据...");
+        Log.d("HomeFragment", "开始获取网络数据...: "  + ", 刷新: " + isRefresh);
+
+        showLoading(isRefresh);
         new AsyncTask<Void, Void, List<Post>>() {
+            private boolean success = false;
             @Override
             protected List<Post> doInBackground(Void... voids) {
                 try {
@@ -153,9 +322,11 @@ public class HomeFragment extends Fragment {
 
                         String responseString = response.toString();
                         Log.d("HomeFragment", "响应数据: " + responseString);
-
+                        List<Post> newPosts = parseJsonResponse(responseString);
+                        success = true;
+                        return  newPosts;
                         // 解析JSON数据
-                        return parseJsonResponse(responseString);
+//                        return parseJsonResponse(responseString);
                     } else {
                         Log.e("HomeFragment", "网络请求失败，响应码: " + responseCode);
                         // 尝试获取错误流
@@ -185,36 +356,74 @@ public class HomeFragment extends Fragment {
 
             @Override
             protected void onPostExecute(List<Post> result) {
+                showLoading(false);
                 if (isAdded() && getActivity() != null) {
                     if (result != null && !result.isEmpty()) {
-                        posts.clear();
-                        posts.addAll(result);
+                        if (isRefresh) {
+                            // 刷新时清空数据
+                            posts.clear();
+                        }
+                        // 检查是否有新数据可添加
+                        if (result.size() > 0) {
+                            // 为了避免重复数据，我们可以做一个简单的去重处理
+                            // 这里只是一个示例，实际应用中可能需要更复杂的去重逻辑
+                            List<Post> uniquePosts = new ArrayList<>();
+                            for (Post newPost : result) {
+                                boolean isDuplicate = false;
+                                for (Post existingPost : posts) {
+                                    if (newPost.getPost_id() != null && newPost.getPost_id().equals(existingPost.getPost_id())) {
+                                        isDuplicate = true;
+                                        break;
+                                    }
+                                }
+                                if (!isDuplicate) {
+                                    uniquePosts.add(newPost);
+                                }
+                            }
+
+                            // 添加新数据
+                            posts.addAll(uniquePosts);
+
+                            // 如果返回的数据少于预期，可能表示没有更多数据了
+                            hasMoreData = result.size() >= 5; // 假设如果返回少于5条，就认为没有更多数据了
+                        } else {
+                            hasMoreData = false;
+                        }
+//                        posts.clear();
+//                        posts.addAll(result);
 
                         // 应用本地存储的点赞状态到新获取的数据
                         applyLocalLikeStatus();
 
                         postAdapter.notifyDataSetChanged();
+                        updateEmptyState(true, false);
                     } else {
-                        // 如果获取数据失败，显示测试数据
-                        posts.clear();
-                        posts.addAll(generateTestPosts(10));
-                        postAdapter.notifyDataSetChanged();
+                        if (isRefresh) {
+                            // 如果获取数据失败，显示测试数据
+                            posts.clear();
+                            posts.addAll(generateTestPosts(10));
+                            postAdapter.notifyDataSetChanged();
+                            updateEmptyState(true, false);
+                        }else {
+                            Toast.makeText(getContext(), "加载更多失败", Toast.LENGTH_SHORT).show();
+                        }
+
                     }
                 }
             }
         }.execute();
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        // 从详情页返回时，应用本地存储的点赞状态
-        applyLocalLikeStatus();
-        // 如果适配器存在，通知数据更新
-        if (postAdapter != null) {
-            postAdapter.notifyDataSetChanged();
-        }
-    }
+//    @Override
+//    public void onResume() {
+//        super.onResume();
+//        // 从详情页返回时，应用本地存储的点赞状态
+//        applyLocalLikeStatus();
+//        // 如果适配器存在，通知数据更新
+//        if (postAdapter != null) {
+//            postAdapter.notifyDataSetChanged();
+//        }
+//    }
     // 添加方法应用本地点赞状态
     private void applyLocalLikeStatus() {
         if (getActivity() == null || posts.isEmpty()) return;
@@ -396,12 +605,52 @@ public class HomeFragment extends Fragment {
 
     // 适配器类，修改使其支持加载图片
     private class PostAdapter extends RecyclerView.Adapter<PostViewHolder> {
+        private static final int TYPE_ITEM = 0;
+        private static final int TYPE_FOOTER = 1;
+        private boolean showFooter = false;
         private List<Post> posts;
 
         public PostAdapter(List<Post> posts) {
             this.posts = posts;
         }
 
+        public void showLoadingFooter(boolean show) {
+            if (showFooter != show) {
+                showFooter = show;
+                notifyDataSetChanged();
+            }
+        }
+
+        @Override
+        public int getItemViewType(int position) {
+            // 如果是最后一个位置且需要显示Footer，则返回Footer类型
+            if (showFooter && position == getItemCount() - 1) {
+                return TYPE_FOOTER;
+            }
+            return TYPE_ITEM;
+        }
+
+
+//        @Override
+//        public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+//            if (viewType == TYPE_FOOTER) {
+//                // 加载Footer布局
+//                View footerView = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_loading_footer, parent, false);
+//                return new FooterViewHolder(footerView);
+//            }
+//            // 普通item布局
+//            View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_post_card, parent, false);
+//            return new PostViewHolder(itemView);
+//        }
+//
+//        @Override
+//        public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+//            if (holder instanceof PostViewHolder) {
+//                Post post = posts.get(position);
+//                ((PostViewHolder) holder).bind(post, position);
+//            }
+//            // FooterViewHolder不需要绑定数据
+//        }
         @Override
         public PostViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
             View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_post_card, parent, false);
@@ -416,7 +665,14 @@ public class HomeFragment extends Fragment {
 
         @Override
         public int getItemCount() {
-            return posts.size();
+            return posts.size() + (showFooter ? 1 : 0);
+        }
+
+        // Footer视图持有者
+        private class FooterViewHolder extends RecyclerView.ViewHolder {
+            public FooterViewHolder(View itemView) {
+                super(itemView);
+            }
         }
     }
 
