@@ -15,6 +15,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.myapplication.R;
 import com.example.myapplication.model.Post;
 import com.example.myapplication.viewmodel.PostViewModel;
@@ -32,7 +33,8 @@ public class PostAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private boolean showFooter = false;
 
     public interface OnPostClickListener {
-        void onPostClick(Post post);
+//        void onPostClick(Post post);
+        void onPostClick(Post post, ImageView sharedImageView);
     }
 
     public PostAdapter(Context context, List<Post> posts, PostViewModel viewModel, OnPostClickListener listener) {
@@ -40,6 +42,7 @@ public class PostAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         this.posts = posts;
         this.viewModel = viewModel;
         this.onPostClickListener = listener;
+        setHasStableIds(true);
     }
 
     public void updateData(List<Post> newPosts) {
@@ -79,10 +82,20 @@ public class PostAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         if (holder instanceof PostViewHolder) {
+            PostViewHolder postViewHolder = (PostViewHolder) holder;
             Post post = posts.get(position);
-            ((PostViewHolder) holder).bind(post, position);
+            postViewHolder.bind(post, position);
+            // 点击事件处理，确保传递ImageView
+            postViewHolder.itemView.setOnClickListener(v -> {
+                if (onPostClickListener != null) {
+                    // 传递post和postImage给监听器
+                    onPostClickListener.onPostClick(post, postViewHolder.postImage);
+                }
+            });
         }
         // FooterViewHolder不需要绑定数据
+
+
     }
 
     @Override
@@ -90,6 +103,12 @@ public class PostAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         return posts.size() + (showFooter ? 1 : 0);
     }
 
+    // 重写 getItemId 方法
+    @Override
+    public long getItemId(int position) {
+        // 如果有唯一ID，使用唯一ID
+        return position;
+    }
     // 普通帖子视图持有者
     class PostViewHolder extends RecyclerView.ViewHolder {
         private ImageView likeIcon;
@@ -122,7 +141,7 @@ public class PostAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             // 设置卡片点击事件
             itemView.setOnClickListener(v -> {
                 if (onPostClickListener != null && currentPost != null) {
-                    onPostClickListener.onPostClick(currentPost);
+                    onPostClickListener.onPostClick(currentPost, postImage);
                 }
             });
         }

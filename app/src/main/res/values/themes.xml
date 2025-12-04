@@ -22,5 +22,11 @@
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">50%</item>
     </style>
-
+    <!-- 启动主题，使用windowBackground来避免白屏 -->
+    <style name="Theme.MyApplication.Launcher" parent="Theme.MyApplication.NoActionBar">
+        <item name="android:windowBackground">@drawable/launch_screen</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowDisablePreview">true</item>
+    </style>
 </resources>

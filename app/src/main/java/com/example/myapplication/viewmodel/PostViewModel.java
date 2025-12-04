@@ -67,10 +67,24 @@ public class PostViewModel extends AndroidViewModel {
         isLoadingLiveData.setValue(true);
         isRefreshingLiveData.setValue(true);
         isErrorLiveData.setValue(false);
+        // 先尝试从缓存加载数据，立即展示给用户
+        List<Post> cachedPosts = repository.readPostsFromCache();
+        if (cachedPosts != null && !cachedPosts.isEmpty()) {
+            // 应用本地存储的点赞状态
+            repository.applyLocalLikeStatus(cachedPosts);
 
+            posts.clear();
+            posts.addAll(cachedPosts);
+            postsLiveData.setValue(new ArrayList<>(posts));
+
+            // 通知UI缓存已加载，正在刷新最新数据
+            hasMoreDataLiveData.setValue(true);
+        }
+        // 异步请求最新数据
         repository.fetchPosts(true, new PostRepository.PostCallback() {
             @Override
             public void onSuccess(List<Post> result) {
+                repository.savePostsToCache(result);
                 // 应用本地存储的点赞状态
                 repository.applyLocalLikeStatus(result);
 

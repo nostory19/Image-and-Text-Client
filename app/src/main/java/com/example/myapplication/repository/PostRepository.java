@@ -11,6 +11,10 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -24,6 +28,10 @@ public class PostRepository {
     public static final String API_URL = "https://college-training-camp.bytedance.com/feed/?count=10&accept_video_clip=false";
     private SharedPreferences prefs;
     private Context context;
+
+    // 添加缓存相关变量
+    public static final String CACHE_FILE_NAME = "posts_cache.json";
+    public static final long CACHE_EXPIRY_TIME = 30 * 60 * 1000; // 30分钟
 
     public PostRepository(Context context) {
         this.context = context;
@@ -293,5 +301,48 @@ public class PostRepository {
             Log.e(TAG, "JSON解析异常", e);
         }
         return postList;
+    }
+
+    // 保存数据到本地缓存
+    public void savePostsToCache(List<Post> posts) {
+        try {
+            File cacheFile = new File(context.getCacheDir(), CACHE_FILE_NAME);
+            FileWriter writer = new FileWriter(cacheFile);
+            Gson gson = new Gson();
+            JsonObject cacheObject = new JsonObject();
+            cacheObject.addProperty("timestamp", System.currentTimeMillis());
+            cacheObject.add("posts", gson.toJsonTree(posts));
+            writer.write(cacheObject.toString());
+            writer.close();
+        } catch (IOException e) {
+            Log.e(TAG, "保存缓存失败", e);
+        }
+    }
+
+    // 从本地缓存读取数据
+    public List<Post> readPostsFromCache() {
+        try {
+            File cacheFile = new File(context.getCacheDir(), CACHE_FILE_NAME);
+            if (!cacheFile.exists()) return null;
+
+            FileReader reader = new FileReader(cacheFile);
+            Gson gson = new Gson();
+            JsonObject cacheObject = gson.fromJson(reader, JsonObject.class);
+            reader.close();
+
+            // 检查缓存是否过期
+            long timestamp = cacheObject.get("timestamp").getAsLong();
+            if (System.currentTimeMillis() - timestamp > CACHE_EXPIRY_TIME) {
+                return null;
+            }
+
+            JsonArray postsArray = cacheObject.getAsJsonArray("posts");
+            List<Post> cachedPosts = new ArrayList<>();
+            // 解析缓存数据...
+            return cachedPosts;
+        } catch (Exception e) {
+            Log.e(TAG, "读取缓存失败", e);
+            return null;
+        }
     }
 }

@@ -1,10 +1,19 @@
 package com.example.myapplication;
 
+import android.os.Build;
 import android.os.Bundle;
+import android.transition.ChangeBounds;
+import android.transition.ChangeImageTransform;
+import android.transition.ChangeTransform;
+import android.transition.Fade;
+import android.transition.TransitionSet;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -46,6 +55,11 @@ public class HomeFragment extends Fragment implements PostAdapter.OnPostClickLis
         super.onCreate(savedInstanceState);
         // 初始化ViewModel
         viewModel = new ViewModelProvider(this).get(PostViewModel.class);
+        // 在onCreate时就开始加载数据，而不是等到onCreateView完成
+        if (firstLoad) {
+            viewModel.refreshData();
+            firstLoad = false;
+        }
     }
 
     @Override
@@ -65,11 +79,11 @@ public class HomeFragment extends Fragment implements PostAdapter.OnPostClickLis
         // 设置事件监听
         setupListeners();
 
-        // 首次加载数据
-        if (firstLoad) {
-            viewModel.refreshData();
-            firstLoad = false;
-        }
+//        // 首次加载数据
+//        if (firstLoad) {
+//            viewModel.refreshData();
+//            firstLoad = false;
+//        }
 
         return view;
     }
@@ -92,30 +106,56 @@ public class HomeFragment extends Fragment implements PostAdapter.OnPostClickLis
         postAdapter = new PostAdapter(getContext(), new ArrayList<>(), viewModel, this);
         recyclerView.setAdapter(postAdapter);
 
-        // 添加滚动监听，实现上滑加载更多
-        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
-            @Override
-            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
-                super.onScrolled(recyclerView, dx, dy);
+        // 延迟设置滚动监听器
+        recyclerView.post(() -> {
+            recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+                @Override
+                public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                    super.onScrolled(recyclerView, dx, dy);
 
-                // 只有在向下滚动且不在加载状态且还有更多数据时才触发加载更多
-                if (dy > 0 && !viewModel.getIsLoadingLiveData().getValue() &&
-                        viewModel.getHasMoreDataLiveData().getValue()) {
-                    StaggeredGridLayoutManager layoutManager = (StaggeredGridLayoutManager) recyclerView.getLayoutManager();
-                    if (layoutManager != null) {
-                        int[] lastVisibleItemPositions = layoutManager.findLastVisibleItemPositions(null);
-                        int lastVisibleItemPosition = getLastVisibleItem(lastVisibleItemPositions);
+                    // 只有在向下滚动且不在加载状态且还有更多数据时才触发加载更多
+                    if (dy > 0 && !viewModel.getIsLoadingLiveData().getValue() &&
+                            viewModel.getHasMoreDataLiveData().getValue()) {
+                        StaggeredGridLayoutManager layoutManager = (StaggeredGridLayoutManager) recyclerView.getLayoutManager();
+                        if (layoutManager != null) {
+                            int[] lastVisibleItemPositions = layoutManager.findLastVisibleItemPositions(null);
+                            int lastVisibleItemPosition = getLastVisibleItem(lastVisibleItemPositions);
 
-                        // 当滑动到倒数第2个item时开始加载更多
-                        if (lastVisibleItemPosition >= postAdapter.getItemCount() - 2) {
-                            viewModel.loadMoreData();
+                            // 当滑动到倒数第2个item时开始加载更多
+                            if (lastVisibleItemPosition >= postAdapter.getItemCount() - 2) {
+                                viewModel.loadMoreData();
+                            }
                         }
                     }
                 }
-            }
 
-            // 移除原来的onScrollStateChanged中的位置保存逻辑，因为我们现在在点击时立即保存
+                // 移除原来的onScrollStateChanged中的位置保存逻辑，因为我们现在在点击时立即保存
+            });
         });
+        // 添加滚动监听，实现上滑加载更多
+//        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+//            @Override
+//            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+//                super.onScrolled(recyclerView, dx, dy);
+//
+//                // 只有在向下滚动且不在加载状态且还有更多数据时才触发加载更多
+//                if (dy > 0 && !viewModel.getIsLoadingLiveData().getValue() &&
+//                        viewModel.getHasMoreDataLiveData().getValue()) {
+//                    StaggeredGridLayoutManager layoutManager = (StaggeredGridLayoutManager) recyclerView.getLayoutManager();
+//                    if (layoutManager != null) {
+//                        int[] lastVisibleItemPositions = layoutManager.findLastVisibleItemPositions(null);
+//                        int lastVisibleItemPosition = getLastVisibleItem(lastVisibleItemPositions);
+//
+//                        // 当滑动到倒数第2个item时开始加载更多
+//                        if (lastVisibleItemPosition >= postAdapter.getItemCount() - 2) {
+//                            viewModel.loadMoreData();
+//                        }
+//                    }
+//                }
+//            }
+//
+//            // 移除原来的onScrollStateChanged中的位置保存逻辑，因为我们现在在点击时立即保存
+//        });
     }
 
     private void setupViewModelObservers() {
@@ -258,17 +298,61 @@ public class HomeFragment extends Fragment implements PostAdapter.OnPostClickLis
         }
     }
 
-    @Override
-    public void onPostClick(Post post) {
-        try {
-            // 在跳转到详情页之前，保存当前滚动位置
+//    @Override
+//    public void onPostClick(Post post) {
+//        try {
+//            // 在跳转到详情页之前，保存当前滚动位置
+//
+//            // 使用getParentFragmentManager代替getFragmentManager
+//            FragmentManager fragmentManager = getParentFragmentManager();
+//            if (fragmentManager != null) {
+//                // 替换当前Fragment为详情页
+//                PostDetailFragment fragment = PostDetailFragment.newInstance(post);
+//                fragmentManager.beginTransaction()
+//                        .replace(R.id.fragment_container, fragment)
+//                        .addToBackStack(null)
+//                        .commit();
+//            }
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            Toast.makeText(getContext(), "跳转失败，请重试", Toast.LENGTH_SHORT).show();
+//        }
+//    }
 
-            // 使用getParentFragmentManager代替getFragmentManager
-            FragmentManager fragmentManager = getParentFragmentManager();
-            if (fragmentManager != null) {
-                // 替换当前Fragment为详情页
-                PostDetailFragment fragment = PostDetailFragment.newInstance(post);
-                fragmentManager.beginTransaction()
+    @Override
+    public void onPostClick(Post post, ImageView sharedImageView) {
+        try {
+            // 保存当前滚动位置
+            saveCurrentScrollPosition();
+
+            // 创建详情页Fragment
+            PostDetailFragment fragment = PostDetailFragment.newInstance(post);
+
+            // 设置共享元素转场动画
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                // 设置过渡名称，确保两个Fragment中的图片有相同的过渡名称
+                sharedImageView.setTransitionName("shared_image_" + post.getPost_id());
+                fragment.setSharedElementEnterTransition(new DetailsTransition());
+                // 创建一个延迟的淡入动画，让背景元素慢一点显示
+                Fade enterFade = new Fade();
+                enterFade.setDuration(500);
+                enterFade.setStartDelay(200); // 延迟开始其他元素的显示
+                fragment.setEnterTransition(enterFade);
+
+                // 退出时的淡入淡出动画
+                Fade exitFade = new Fade();
+                exitFade.setDuration(300);
+                fragment.setExitTransition(exitFade);
+
+                // 使用FragmentManager启动Fragment替换，添加共享元素
+                getParentFragmentManager().beginTransaction()
+                        .addSharedElement(sharedImageView, "shared_image_" + post.getPost_id())
+                        .replace(R.id.fragment_container, fragment)
+                        .addToBackStack(null)
+                        .commit();
+            } else {
+                // 低版本Android直接跳转
+                getParentFragmentManager().beginTransaction()
                         .replace(R.id.fragment_container, fragment)
                         .addToBackStack(null)
                         .commit();
@@ -276,6 +360,20 @@ public class HomeFragment extends Fragment implements PostAdapter.OnPostClickLis
         } catch (Exception e) {
             e.printStackTrace();
             Toast.makeText(getContext(), "跳转失败，请重试", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    // 添加DetailsTransition内部类，实现自定义转场动画
+    public static class DetailsTransition extends TransitionSet {
+        public DetailsTransition() {
+            setOrdering(ORDERING_TOGETHER);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                addTransition(new ChangeBounds()).
+                        addTransition(new ChangeTransform()).
+                        addTransition(new ChangeImageTransform());
+                setDuration(500);
+                setInterpolator(new AccelerateDecelerateInterpolator()); // 使用更平滑的插值器
+            }
         }
     }
 }

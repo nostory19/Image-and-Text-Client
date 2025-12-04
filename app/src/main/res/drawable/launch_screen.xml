@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 背景色 - 修改为android:color -->
+    <item android:color="#3DDC84" />
+
+    <!-- 应用Logo居中显示 -->
+    <item>
+        <bitmap
+            android:gravity="center"
+            android:src="@drawable/ic_launcher_foreground"
+            android:scaleType="centerInside" />
+    </item>
+</layer-list>

@@ -11,11 +11,16 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.transition.ChangeBounds;
+import android.transition.ChangeImageTransform;
+import android.transition.ChangeTransform;
+import android.transition.TransitionSet;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.Button;
 import android.widget.EditText;
@@ -93,21 +98,74 @@ public class PostDetailFragment extends Fragment {
                 viewModel.setPost(post);
             }
         }
+
+        // 添加入场动画配置
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            setSharedElementEnterTransition(new DetailsTransition());
+            setSharedElementReturnTransition(new DetailsTransition());
+        }
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+//        // 设置退出时的转场动画
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+//            setSharedElementReturnTransition(new DetailsTransition());
+//        }
         return inflater.inflate(R.layout.fragment_post_detail, container, false);
     }
-
+    // 添加DetailsTransition内部类
+    public static class DetailsTransition extends TransitionSet {
+        public DetailsTransition() {
+            setOrdering(ORDERING_TOGETHER);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                addTransition(new ChangeBounds()).
+                        addTransition(new ChangeTransform()).
+                        addTransition(new ChangeImageTransform());
+                setDuration(500);
+                setInterpolator(new AccelerateDecelerateInterpolator()); // 平滑的加速减速插值器
+            }
+        }
+    }
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
         // 初始化视图组件
         initViews(view);
+// 设置imageViewPager的过渡名称，确保与HomeFragment中的一致
+        if (getArguments() != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            Post post = (Post) getArguments().getSerializable(ARG_POST);
+            if (post != null) {
+                imageViewPager.setTransitionName("shared_image_" + post.getPost_id());
+            }
+        }
+        // 让其他元素（作者信息、内容等）开始时透明，然后淡入
+        authorName.setAlpha(0f);
+        postTitle.setAlpha(0f);
+        postContent.setAlpha(0f);
+        likeButton.setAlpha(0f);
+        commentButton.setAlpha(0f);
+        // 延迟显示其他元素，突出图片的转场动画
+        // 延迟显示其他元素，突出图片的转场动画
+        new Handler().postDelayed(() -> {
+            // 创建淡入动画
+            AnimatorSet animatorSet = new AnimatorSet();
 
+            // 直接使用可变参数方式添加动画，避免类型转换问题
+            animatorSet.playTogether(
+                    ObjectAnimator.ofFloat(authorName, "alpha", 0f, 1f),
+                    ObjectAnimator.ofFloat(postTitle, "alpha", 0f, 1f),
+                    ObjectAnimator.ofFloat(postContent, "alpha", 0f, 1f),
+                    ObjectAnimator.ofFloat(likeButton, "alpha", 0f, 1f),
+                    ObjectAnimator.ofFloat(commentButton, "alpha", 0f, 1f)
+            );
+
+            // 设置动画时间和启动
+            animatorSet.setDuration(500);
+            animatorSet.start();
+        }, 300);
         // 设置观察者，监听数据变化
         observeViewModel();
 
@@ -303,7 +361,7 @@ public class PostDetailFragment extends Fragment {
         }
 
         // 创建图片适配器
-        ImagePagerAdapter adapter = new ImagePagerAdapter(post.getClips());
+        ImagePagerAdapter adapter = new ImagePagerAdapter(post.getClips(), post.getPost_id());
         imageViewPager.setAdapter(adapter);
 
         // 监听ViewPager页面变化
@@ -434,11 +492,15 @@ public class PostDetailFragment extends Fragment {
         private List<Post.Clip> clips;
         private float aspectRatio = 1.0f;
 
-        public ImagePagerAdapter(List<Post.Clip> clips) {
+        private String postId;
+
+        public ImagePagerAdapter(List<Post.Clip> clips, String postId) {
             this.clips = clips;
+            this.postId = postId;
+
             if (clips != null && !clips.isEmpty()) {
                 Post.Clip firstClip = clips.get(0);
-                if (firstClip != null && firstClip.getWidth() > 0 && firstClip.getHeight() > 0) {
+                if (firstClip != null && firstClip.getWidth() > 0 && firstClip.getHeight() > 0){
                     float rawRatio = (float) firstClip.getWidth() / firstClip.getHeight();
                     aspectRatio = Math.max(0.75f, Math.min(1.7778f, rawRatio));
                     updateImageContainerSize();
@@ -473,7 +535,7 @@ public class PostDetailFragment extends Fragment {
         @Override
         public void onBindViewHolder(@NonNull ImageViewHolder holder, int position) {
             if (clips != null && position < clips.size()) {
-                holder.bind(clips.get(position), aspectRatio);
+                holder.bind(clips.get(position), aspectRatio, postId);
             }
         }
 
@@ -495,9 +557,12 @@ public class PostDetailFragment extends Fragment {
             errorImage = itemView.findViewById(R.id.error_image);
         }
 
-        public void bind(Post.Clip clip, float aspectRatio) {
+        public void bind(Post.Clip clip, float aspectRatio, String postId) {
             if (clip == null) return;
-
+// 设置过渡名称，确保与HomeFragment中的图片过渡名称一致
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                imageView.setTransitionName("shared_image_" + postId);
+            }
             loadingProgress.setVisibility(View.VISIBLE);
             imageView.setVisibility(View.GONE);
             errorImage.setVisibility(View.GONE);
