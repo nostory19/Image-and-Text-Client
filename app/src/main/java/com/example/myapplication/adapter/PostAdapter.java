@@ -1,0 +1,209 @@
+package com.example.myapplication.adapter;
+
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
+import android.content.Context;
+import android.graphics.Color;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.animation.DecelerateInterpolator;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.bumptech.glide.Glide;
+import com.example.myapplication.R;
+import com.example.myapplication.model.Post;
+import com.example.myapplication.viewmodel.PostViewModel;
+
+import java.util.List;
+
+public class PostAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+    private static final int TYPE_ITEM = 0;
+    private static final int TYPE_FOOTER = 1;
+
+    private Context context;
+    private List<Post> posts;
+    private PostViewModel viewModel;
+    private OnPostClickListener onPostClickListener;
+    private boolean showFooter = false;
+
+    public interface OnPostClickListener {
+        void onPostClick(Post post);
+    }
+
+    public PostAdapter(Context context, List<Post> posts, PostViewModel viewModel, OnPostClickListener listener) {
+        this.context = context;
+        this.posts = posts;
+        this.viewModel = viewModel;
+        this.onPostClickListener = listener;
+    }
+
+    public void updateData(List<Post> newPosts) {
+        this.posts = newPosts;
+        notifyDataSetChanged();
+    }
+
+    public void showLoadingFooter(boolean show) {
+        if (showFooter != show) {
+            showFooter = show;
+            notifyDataSetChanged();
+        }
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        if (showFooter && position == getItemCount() - 1) {
+            return TYPE_FOOTER;
+        }
+        return TYPE_ITEM;
+    }
+
+    @NonNull
+    @Override
+    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        LayoutInflater inflater = LayoutInflater.from(parent.getContext());
+
+        if (viewType == TYPE_FOOTER) {
+            View footerView = inflater.inflate(R.layout.item_loading_footer, parent, false);
+            return new FooterViewHolder(footerView);
+        }
+
+        View itemView = inflater.inflate(R.layout.item_post_card, parent, false);
+        return new PostViewHolder(itemView);
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+        if (holder instanceof PostViewHolder) {
+            Post post = posts.get(position);
+            ((PostViewHolder) holder).bind(post, position);
+        }
+        // FooterViewHolder不需要绑定数据
+    }
+
+    @Override
+    public int getItemCount() {
+        return posts.size() + (showFooter ? 1 : 0);
+    }
+
+    // 普通帖子视图持有者
+    class PostViewHolder extends RecyclerView.ViewHolder {
+        private ImageView likeIcon;
+        private TextView likeCount;
+        private TextView postTitle;
+        private TextView authorName;
+        private ImageView authorAvatar;
+        private ImageView postImage;
+        private View likeButton;
+        private int position;
+        private Post currentPost;
+
+        public PostViewHolder(@NonNull View itemView) {
+            super(itemView);
+            // 初始化所有视图引用
+            likeButton = itemView.findViewById(R.id.like_button);
+            likeIcon = itemView.findViewById(R.id.like_icon);
+            likeCount = itemView.findViewById(R.id.like_count);
+            postTitle = itemView.findViewById(R.id.post_title);
+            authorName = itemView.findViewById(R.id.author_name);
+            authorAvatar = itemView.findViewById(R.id.author_avatar);
+            postImage = itemView.findViewById(R.id.post_image);
+
+            // 设置点赞按钮点击事件
+            likeButton.setOnClickListener(v -> handleLikeClick());
+
+            // 设置卡片点击事件
+            itemView.setOnClickListener(v -> {
+                if (onPostClickListener != null && currentPost != null) {
+                    onPostClickListener.onPostClick(currentPost);
+                }
+            });
+        }
+
+        public void bind(Post post, int pos) {
+            this.currentPost = post;
+            this.position = pos;
+
+            // 设置内容
+            postTitle.setText(post.getTitle());
+            authorName.setText(post.getAuthorName());
+            likeCount.setText(String.valueOf(post.getLikeCount()));
+
+            // 加载用户头像
+            if (post.getAuthor() != null && post.getAuthor().getAvatar() != null && !post.getAuthor().getAvatar().isEmpty()) {
+                try {
+                    Glide.with(context)
+                            .load(post.getAuthor().getAvatar())
+                            .placeholder(R.drawable.user_avatar)
+                            .error(R.drawable.user_avatar)
+                            .override(64, 64)
+                            .circleCrop()
+                            .into(authorAvatar);
+                } catch (Exception e) {
+                    authorAvatar.setImageResource(R.drawable.user_avatar);
+                }
+            } else {
+                authorAvatar.setImageResource(R.drawable.user_avatar);
+            }
+
+            // 加载帖子图片
+            if (post.getClips() != null && !post.getClips().isEmpty()) {
+                Post.Clip firstClip = post.getClips().get(0);
+                if (firstClip.getType() == 0 && firstClip.getUrl() != null) {
+                    Glide.with(context)
+                            .load(firstClip.getUrl())
+                            .placeholder(R.drawable.ic_launcher_background)
+                            .error(R.drawable.ic_launcher_foreground)
+                            .centerCrop()
+                            .into(postImage);
+                }
+            }
+
+            // 设置初始点赞状态
+            updateLikeUI(post.isLiked());
+        }
+
+        private void handleLikeClick() {
+            if (currentPost == null || viewModel == null) return;
+
+            boolean isLiked = !currentPost.isLiked();
+            viewModel.saveLikeStatus(currentPost.getPost_id(), isLiked);
+
+            // 更新UI和动画
+            updateLikeUI(isLiked);
+            animateLike(isLiked);
+        }
+
+        private void updateLikeUI(boolean isLiked) {
+            if (isLiked) {
+                likeIcon.setImageResource(R.drawable.ic_s_s_heart_outlined_16);
+                likeIcon.setColorFilter(Color.RED);
+            } else {
+                likeIcon.setImageResource(R.drawable.ic_s_s_heart_outlined_16);
+                likeIcon.setColorFilter(Color.GRAY);
+            }
+        }
+
+        private void animateLike(boolean isLiked) {
+            ObjectAnimator scaleX = ObjectAnimator.ofFloat(likeIcon, "scaleX", 1f, 1.3f, 1f);
+            ObjectAnimator scaleY = ObjectAnimator.ofFloat(likeIcon, "scaleY", 1f, 1.3f, 1f);
+
+            AnimatorSet animatorSet = new AnimatorSet();
+            animatorSet.setDuration(300);
+            animatorSet.setInterpolator(new DecelerateInterpolator());
+            animatorSet.playTogether(scaleX, scaleY);
+            animatorSet.start();
+        }
+    }
+
+    // Footer视图持有者
+    class FooterViewHolder extends RecyclerView.ViewHolder {
+        public FooterViewHolder(@NonNull View itemView) {
+            super(itemView);
+        }
+    }
+}
