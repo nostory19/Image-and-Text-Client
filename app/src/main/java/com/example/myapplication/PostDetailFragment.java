@@ -2,6 +2,7 @@ package com.example.myapplication;
 
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
@@ -41,6 +42,13 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.Priority;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.RequestOptions;
+import com.bumptech.glide.request.target.Target;
 import com.example.myapplication.model.Post;
 import com.example.myapplication.viewmodel.PostDetailViewModel;
 
@@ -76,6 +84,8 @@ public class PostDetailFragment extends Fragment {
     private LinearLayout shareButton;
     private ImageView shareIcon;
     private TextView likeCount;
+
+    private LinearLayout progressDotsContainer;
 
     public static PostDetailFragment newInstance(Post post) {
         PostDetailFragment fragment = new PostDetailFragment();
@@ -182,8 +192,9 @@ public class PostDetailFragment extends Fragment {
 
         // 图片容器
         imageViewPager = view.findViewById(R.id.image_view_pager);
-        progressText = view.findViewById(R.id.progress_text);
-        progressBar = view.findViewById(R.id.progress_bar);
+//        progressText = view.findViewById(R.id.progress_text);
+//        progressBar = view.findViewById(R.id.progress_bar);
+        progressDotsContainer = view.findViewById(R.id.progress_dots_container);
 
         // 内容区
         postTitle = view.findViewById(R.id.post_title);
@@ -348,15 +359,20 @@ public class PostDetailFragment extends Fragment {
     private void setupImageAdapter(Post post) {
         if (post == null || post.getClips() == null || post.getClips().isEmpty()) {
             // 无图片状态
-            progressBar.setVisibility(View.GONE);
-            progressText.setVisibility(View.GONE);
+//            progressBar.setVisibility(View.GONE);
+            progressDotsContainer.setVisibility(View.GONE);
+//            progressText.setVisibility(View.GONE);
             return;
         }
 
         // 多图时显示进度条
         if (post.getClips().size() > 1) {
-            progressBar.setVisibility(View.VISIBLE);
-            progressText.setVisibility(View.VISIBLE);
+//            progressBar.setVisibility(View.VISIBLE);
+            progressDotsContainer.setVisibility(View.VISIBLE);
+//            progressText.setVisibility(View.VISIBLE);
+
+            // 初始化小圆点指示器
+            initProgressDots(post.getClips().size());
             updateProgress(0);
         }
 
@@ -374,12 +390,56 @@ public class PostDetailFragment extends Fragment {
         });
     }
 
+
+    // 添加一个新方法来初始化小圆点指示器
+    private void initProgressDots(int count) {
+        // 清除现有指示器
+        progressDotsContainer.removeAllViews();
+
+        // 设置weightSum，以便平均分配空间
+        progressDotsContainer.setWeightSum(count);
+
+        // 根据图片数量创建条状物指示器
+        for (int i = 0; i < count; i++) {
+            View dotView = new View(getContext());
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                    0, // 使用weight分配宽度
+                    8   // 保持高度不变
+            );
+
+            // 使用weight平均分配空间
+            params.weight = 1;
+
+            // 设置条状物之间的间距
+            if (i > 0 && i < count - 1) {
+                params.leftMargin = 4;
+                params.rightMargin = 4;
+            } else if (i > 0) {
+                // 最后一个只设置左边距
+                params.leftMargin = 4;
+            }
+
+            // 设置条状物样式
+            dotView.setLayoutParams(params);
+            dotView.setBackgroundResource(R.drawable.dot_drawable);
+
+            // 默认设置为非选中状态
+            dotView.setSelected(false);
+
+            // 添加到容器
+            progressDotsContainer.addView(dotView);
+        }
+    }
     private void updateProgress(int position) {
         Post post = viewModel.getPostLiveData().getValue();
         if (post != null && post.getClips() != null) {
             int total = post.getClips().size();
-            progressText.setText((position + 1) + "/" + total);
-            progressBar.setProgress((position + 1) * 100 / total);
+//            progressText.setText((position + 1) + "/" + total);
+//            progressBar.setProgress((position + 1) * 100 / total);
+            // 更新小圆点选中状态
+            for (int i = 0; i < progressDotsContainer.getChildCount(); i++) {
+                progressDotsContainer.getChildAt(i).setSelected(i == position);
+            }
         }
     }
 
@@ -549,7 +609,7 @@ public class PostDetailFragment extends Fragment {
         private ImageView imageView;
         private ProgressBar loadingProgress;
         private ImageView errorImage;
-
+        private static final String TAG = "ImageViewHolder";
         public ImageViewHolder(@NonNull View itemView) {
             super(itemView);
             imageView = itemView.findViewById(R.id.pager_image);
@@ -590,6 +650,12 @@ public class PostDetailFragment extends Fragment {
                     loadingProgress.setVisibility(View.GONE);
                 }
             }, 500);
+
+
+            // 设置过渡名称
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                imageView.setTransitionName("shared_image_" + postId);
+            }
         }
     }
 
