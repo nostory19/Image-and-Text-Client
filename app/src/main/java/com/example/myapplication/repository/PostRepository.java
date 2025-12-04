@@ -32,6 +32,7 @@ public class PostRepository {
 
     public interface PostCallback {
         void onSuccess(List<Post> posts);
+
         void onFailure(String error);
     }
 
@@ -39,6 +40,7 @@ public class PostRepository {
     public void fetchPosts(boolean isRefresh, PostCallback callback) {
         new FetchPostTask(callback, isRefresh).execute();
     }
+
     // 加载本地点赞状态
     public void applyLocalLikeStatus(List<Post> posts) {
         if (context == null || posts.isEmpty()) return;
@@ -83,6 +85,7 @@ public class PostRepository {
         }
         return posts;
     }
+
     private class FetchPostTask extends AsyncTask<Void, Void, List<Post>> {
         private PostCallback callback;
         private boolean isRefresh;
@@ -92,6 +95,7 @@ public class PostRepository {
             this.callback = callback;
             this.isRefresh = isRefresh;
         }
+
         @Override
         protected List<Post> doInBackground(Void... voids) {
             try {
@@ -153,10 +157,16 @@ public class PostRepository {
             if (rootObject.has("status_code") && rootObject.get("status_code").getAsInt() == 0) {
                 if (rootObject.has("post_list") && !rootObject.get("post_list").isJsonNull()) {
                     JsonArray postsArray = rootObject.getAsJsonArray("post_list");
+                    // 打印原始JSON数组
+                    Log.d(TAG, "原始JSON数组: " + postsArray.toString());
 
                     for (int i = 0; i < postsArray.size(); i++) {
                         JsonObject postObj = postsArray.get(i).getAsJsonObject();
-
+                        // 先检查clips是否为空
+                        if (postObj.has("clips") && postObj.get("clips").isJsonNull()) {
+                            Log.w(TAG, "第" + i + "个post的clips为null，跳过该帖子");
+                            continue; // 跳过当前帖子，不解析也不展示
+                        }
                         // 解析作者信息
                         Post.Author author = new Post.Author();
                         if (postObj.has("author") && !postObj.get("author").isJsonNull()) {
@@ -171,25 +181,65 @@ public class PostRepository {
 
                         // 解析clips
                         List<Post.Clip> clips = new ArrayList<>();
-                        if (postObj.has("clips") && !postObj.get("clips").isJsonNull() && postObj.get("clips").isJsonArray()) {
-                            JsonArray clipsArray = postObj.getAsJsonArray("clips");
-                            for (int j = 0; j < clipsArray.size(); j++) {
-                                if (!clipsArray.get(j).isJsonNull()) {
-                                    JsonObject clipObj = clipsArray.get(j).getAsJsonObject();
-                                    Post.Clip clip = new Post.Clip();
-                                    if (clipObj.has("type") && !clipObj.get("type").isJsonNull())
-                                        clip.setType(clipObj.get("type").getAsInt());
-                                    if (clipObj.has("width") && !clipObj.get("width").isJsonNull())
-                                        clip.setWidth(clipObj.get("width").getAsInt());
-                                    if (clipObj.has("height") && !clipObj.get("height").isJsonNull())
-                                        clip.setHeight(clipObj.get("height").getAsInt());
-                                    if (clipObj.has("url") && !clipObj.get("url").isJsonNull())
-                                        clip.setUrl(clipObj.get("url").getAsString());
-                                    clips.add(clip);
-                                }
-                            }
-                        }
+                        try {
+                            if (postObj.has("clips") && !postObj.get("clips").isJsonNull()) {
+                                // 检查是否为JSONArray
+                                if (postObj.get("clips").isJsonArray()) {
+                                    JsonArray clipsArray = postObj.getAsJsonArray("clips");
+//                                    Log.d(TAG, "第" + i + "个post的clips数组大小: " + clipsArray.size());
 
+                                    for (int j = 0; j < clipsArray.size(); j++) {
+                                        try {
+                                            if (!clipsArray.get(j).isJsonNull()) {
+                                                JsonObject clipObj = clipsArray.get(j).getAsJsonObject();
+                                                Post.Clip clip = new Post.Clip();
+
+                                                // 必须确保type为0（图片类型）
+                                                if (clipObj.has("type") && !clipObj.get("type").isJsonNull()) {
+                                                    clip.setType(clipObj.get("type").getAsInt());
+                                                }
+
+                                                if (clipObj.has("width") && !clipObj.get("width").isJsonNull()) {
+                                                    clip.setWidth(clipObj.get("width").getAsInt());
+                                                }
+
+                                                if (clipObj.has("height") && !clipObj.get("height").isJsonNull()) {
+                                                    clip.setHeight(clipObj.get("height").getAsInt());
+                                                }
+
+                                                // 确保url不为空且有效
+                                                if (clipObj.has("url") && !clipObj.get("url").isJsonNull()) {
+                                                    String url = clipObj.get("url").getAsString();
+                                                    if (url != null && !url.isEmpty()) {
+                                                        clip.setUrl(url);
+                                                        clips.add(clip);
+//                                                        Log.d(TAG, "成功解析clip[" + j + "]: type=" + clip.getType() + ", url=" + url);
+                                                    } else {
+                                                        Log.w(TAG, "clip[" + j + "]的URL为空");
+                                                    }
+                                                } else {
+                                                    Log.w(TAG, "clip[" + j + "]缺少URL字段");
+                                                }
+                                            }
+                                        } catch (Exception e) {
+                                            Log.e(TAG, "解析单个clip时出错: " + e.getMessage());
+                                        }
+                                    }
+                                } else {
+                                    Log.w(TAG, "第" + i + "个post的clips不是JSONArray类型");
+                                }
+                            } else {
+                                Log.w(TAG, "第" + i + "个post没有clips字段或clips为null");
+                            }
+                        } catch (Exception e) {
+                            Log.e(TAG, "解析clips数组时出错: " + e.getMessage());
+                        }
+                        // 如果没有解析到图片，尝试从其他可能的字段获取
+                        if (clips.isEmpty()) {
+                            Log.d(TAG, "尝试从其他字段查找图片...");
+                            // 这里可以添加逻辑，从其他可能包含图片URL的字段获取
+                            // 例如：postObj.has("image_url") 或其他自定义字段
+                        }
                         // 解析music
                         Post.Music music = new Post.Music();
                         if (postObj.has("music") && !postObj.get("music").isJsonNull()) {

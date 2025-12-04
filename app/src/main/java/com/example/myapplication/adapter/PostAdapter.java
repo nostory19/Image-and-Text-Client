@@ -102,6 +102,9 @@ public class PostAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         private int position;
         private Post currentPost;
 
+        private String boundPostId; // 添加此字段跟踪当前绑定的帖子ID
+        private AnimatorSet currentAnimator; // 添加此字段跟踪当前执行的动画
+
         public PostViewHolder(@NonNull View itemView) {
             super(itemView);
             // 初始化所有视图引用
@@ -127,6 +130,12 @@ public class PostAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         public void bind(Post post, int pos) {
             this.currentPost = post;
             this.position = pos;
+            this.boundPostId = post.getPost_id(); // 绑定帖子ID
+            // 取消之前可能正在执行的动画
+            if (currentAnimator != null) {
+                currentAnimator.cancel();
+                currentAnimator = null;
+            }
 
             // 设置内容
             postTitle.setText(post.getTitle());
@@ -194,34 +203,47 @@ public class PostAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             if (currentPost == null || viewModel == null) return;
 
             boolean isLiked = !currentPost.isLiked();
+
+            // 先保存点赞状态到ViewModel
             viewModel.saveLikeStatus(currentPost.getPost_id(), isLiked);
 
-            // 更新UI和动画
+            // 更新UI状态
             updateLikeUI(isLiked);
+
+            // 执行点赞动画
             animateLike(isLiked);
         }
 
         private void updateLikeUI(boolean isLiked) {
+            if (currentPost == null) return;
+
+            // 更新点赞图标状态
             if (isLiked) {
                 likeIcon.setImageResource(R.drawable.ic_s_s_heart_outlined_16);
                 likeIcon.setColorFilter(Color.RED);
             } else {
                 likeIcon.setImageResource(R.drawable.ic_s_s_heart_outlined_16);
-                likeIcon.setColorFilter(Color.GRAY);
+                likeIcon.clearColorFilter();
             }
+
+            // 直接从currentPost获取最新的点赞数
+            likeCount.setText(String.valueOf(currentPost.getLikeCount()));
         }
+        // 保留原有的updateLikeUI方法，用于bind时调用
 
         private void animateLike(boolean isLiked) {
-            ObjectAnimator scaleX = ObjectAnimator.ofFloat(likeIcon, "scaleX", 1f, 1.3f, 1f);
-            ObjectAnimator scaleY = ObjectAnimator.ofFloat(likeIcon, "scaleY", 1f, 1.3f, 1f);
+            if (likeIcon != null) {
+                // 放大再缩小的动画
+                ObjectAnimator scaleX = ObjectAnimator.ofFloat(likeIcon, "scaleX", 1f, 1.3f, 1f);
+                ObjectAnimator scaleY = ObjectAnimator.ofFloat(likeIcon, "scaleY", 1f, 1.3f, 1f);
 
-            AnimatorSet animatorSet = new AnimatorSet();
-            animatorSet.setDuration(300);
-            animatorSet.setInterpolator(new DecelerateInterpolator());
-            animatorSet.playTogether(scaleX, scaleY);
-            animatorSet.start();
-        }
-    }
+                AnimatorSet animatorSet = new AnimatorSet();
+                animatorSet.setDuration(300);
+                animatorSet.setInterpolator(new DecelerateInterpolator());
+                animatorSet.playTogether(scaleX, scaleY);
+                animatorSet.start();
+            }
+        }}
 
     // Footer视图持有者
     class FooterViewHolder extends RecyclerView.ViewHolder {
