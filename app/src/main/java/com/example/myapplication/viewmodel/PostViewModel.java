@@ -110,9 +110,9 @@ public class PostViewModel extends AndroidViewModel {
     // 加载更多数据
     public void loadMoreData() {
         if (isLoading || !hasMoreData) return;
-
-        isLoading = true;
-        isLoadingLiveData.setValue(true);
+// 移除isLoading状态的代码，避免触发加载动画
+//        isLoading = true;
+//        isLoadingLiveData.setValue(true);
 
         repository.fetchPosts(false, new PostRepository.PostCallback() {
             @Override
@@ -141,16 +141,16 @@ public class PostViewModel extends AndroidViewModel {
                 hasMoreData = result.size() >= 5;
                 hasMoreDataLiveData.setValue(hasMoreData);
 
-                isLoading = false;
-                isLoadingLiveData.setValue(false);
+//                isLoading = false;
+//                isLoadingLiveData.setValue(false);
             }
 
             @Override
             public void onFailure(String error) {
                 Log.e(TAG, "加载更多失败: " + error);
 
-                isLoading = false;
-                isLoadingLiveData.setValue(false);
+//                isLoading = false;
+//                isLoadingLiveData.setValue(false);
                 isErrorLiveData.setValue(true);
                 errorMessageLiveData.setValue("加载更多失败");
             }

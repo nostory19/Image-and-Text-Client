@@ -54,6 +54,7 @@ public class HomeFragment extends Fragment implements PostAdapter.OnPostClickLis
         initViews(view);
 
         // 设置RecyclerView
+        loadingLayout.setVisibility(View.GONE);
         setupRecyclerView();
 
         // 设置ViewModel观察
@@ -143,10 +144,15 @@ public class HomeFragment extends Fragment implements PostAdapter.OnPostClickLis
 
         // 观察加载状态
         viewModel.getIsLoadingLiveData().observe(getViewLifecycleOwner(), isLoading -> {
-            loadingLayout.setVisibility(isLoading ? View.VISIBLE : View.GONE);
-            if (!isLoading && !viewModel.getIsRefreshingLiveData().getValue()) {
-                postAdapter.showLoadingFooter(false);
-            }
+            // 只在非刷新状态时显示全局加载布局，用于初始加载
+//            if (!viewModel.getIsRefreshingLiveData().getValue()) {
+//                loadingLayout.setVisibility(isLoading ? View.VISIBLE : View.GONE);
+//            }
+//            if (!isLoading && !viewModel.getIsRefreshingLiveData().getValue()) {
+//                postAdapter.showLoadingFooter(false);
+//            }
+            // 不显示底部加载动画
+            postAdapter.showLoadingFooter(false);
         });
 
         // 观察刷新状态
@@ -156,9 +162,9 @@ public class HomeFragment extends Fragment implements PostAdapter.OnPostClickLis
 
         // 观察加载更多状态
         viewModel.getHasMoreDataLiveData().observe(getViewLifecycleOwner(), hasMoreData -> {
-            if (!hasMoreData) {
-                postAdapter.showLoadingFooter(false);
-            }
+//            if (!hasMoreData) {
+//                postAdapter.showLoadingFooter(false);
+//            }
         });
 
         // 观察错误状态
@@ -188,20 +194,17 @@ public class HomeFragment extends Fragment implements PostAdapter.OnPostClickLis
         super.onResume();
 
         // 从详情页返回时，应用本地存储的点赞状态
-        List<Post> postList = viewModel.getPostsLiveData().getValue();
-        if (postList != null && !postList.isEmpty()) {
-            viewModel.applyLocalLikeStatus();
+        viewModel.applyLocalLikeStatus();
 
-            // 恢复之前的滚动位置
-            if (scrollPosition > 0 && recyclerView != null) {
-                StaggeredGridLayoutManager layoutManager = (StaggeredGridLayoutManager) recyclerView.getLayoutManager();
-                if (layoutManager != null) {
-                    recyclerView.post(() -> {
-                        // 为了更好的用户体验，可以滚动到比保存位置稍前的位置
-                        int positionToScroll = Math.max(0, scrollPosition - 2);
-                        layoutManager.scrollToPosition(positionToScroll);
-                    });
-                }
+        // 恢复之前的滚动位置
+        if (scrollPosition > 0 && recyclerView != null) {
+            StaggeredGridLayoutManager layoutManager = (StaggeredGridLayoutManager) recyclerView.getLayoutManager();
+            if (layoutManager != null) {
+                recyclerView.post(() -> {
+                    // 为了更好的用户体验，可以滚动到比保存位置稍前的位置
+                    int positionToScroll = Math.max(0, scrollPosition - 2);
+                    layoutManager.scrollToPosition(positionToScroll);
+                });
             }
         }
     }

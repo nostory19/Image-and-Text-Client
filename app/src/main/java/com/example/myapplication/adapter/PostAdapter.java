@@ -152,8 +152,31 @@ public class PostAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
             // 加载帖子图片
             if (post.getClips() != null && !post.getClips().isEmpty()) {
+                // 加载第一个图片
                 Post.Clip firstClip = post.getClips().get(0);
                 if (firstClip.getType() == 0 && firstClip.getUrl() != null) {
+                    // 设置宽高比限制：3:4 到 4:3
+                    if (firstClip.getWidth() > 0 && firstClip.getHeight() > 0) {
+                        // 计算屏幕宽度的一半作为图片宽度（考虑双列布局）
+                        int screenWidth = context.getResources().getDisplayMetrics().widthPixels;
+                        int imageWidth = (screenWidth - 16) / 2; // 减去间距
+
+                        // 计算原始宽高比
+                        float rawAspectRatio = (float) firstClip.getWidth() / firstClip.getHeight();
+
+                        // 限制宽高比在3:4 (0.75) 到 4:3 (1.333) 之间
+                        float clampedAspectRatio = Math.max(0.75f, Math.min(1.333f, rawAspectRatio));
+
+                        // 根据限制后的宽高比计算高度
+                        int imageHeight = (int) (imageWidth / clampedAspectRatio);
+
+                        // 设置图片布局参数
+                        ViewGroup.LayoutParams layoutParams = postImage.getLayoutParams();
+                        layoutParams.width = imageWidth;
+                        layoutParams.height = imageHeight;
+                        postImage.setLayoutParams(layoutParams);
+                    }
+
                     Glide.with(context)
                             .load(firstClip.getUrl())
                             .placeholder(R.drawable.ic_launcher_background)

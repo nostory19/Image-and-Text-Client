@@ -13,7 +13,7 @@ import com.example.myapplication.model.Post;
 
 public class PostDetailViewModel extends AndroidViewModel {
     private static final String PREF_FOLLOWED_AUTHORS = "followed_authors";
-    private static final String PREF_LIKED_POSTS = "liked_posts";
+    private static final String PREF_LIKED_POSTS = "like_posts";
 
     private MutableLiveData<Post> postLiveData = new MutableLiveData<>();
     private MutableLiveData<Boolean> isFollowingLiveData = new MutableLiveData<>(false);
