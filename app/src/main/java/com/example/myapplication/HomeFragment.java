@@ -37,6 +37,8 @@ public class HomeFragment extends Fragment implements PostAdapter.OnPostClickLis
     private PostViewModel viewModel;
     private boolean firstLoad = true;
     private int scrollPosition = 0;
+    // 保存滚动偏移量
+    private int[] scrollOffsets;
     private boolean shouldRestorePosition = false;
 
     @Override
@@ -112,26 +114,7 @@ public class HomeFragment extends Fragment implements PostAdapter.OnPostClickLis
                 }
             }
 
-            @Override
-            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
-                super.onScrollStateChanged(recyclerView, newState);
-                // 当滚动停止时，保存当前滚动位置
-                if (newState == RecyclerView.SCROLL_STATE_IDLE) {
-                    StaggeredGridLayoutManager layoutManager = (StaggeredGridLayoutManager) recyclerView.getLayoutManager();
-                    if (layoutManager != null) {
-                        int[] firstVisiblePositions = layoutManager.findFirstVisibleItemPositions(null);
-                        if (firstVisiblePositions.length > 0) {
-                            // 取最小的位置，确保是真正的第一个可见项
-                            int minPosition = firstVisiblePositions[0];
-                            for (int pos : firstVisiblePositions) {
-                                minPosition = Math.min(minPosition, pos);
-                            }
-                            scrollPosition = minPosition;
-                            shouldRestorePosition = true;
-                        }
-                    }
-                }
-            }
+            // 移除原来的onScrollStateChanged中的位置保存逻辑，因为我们现在在点击时立即保存
         });
     }
 
@@ -180,6 +163,7 @@ public class HomeFragment extends Fragment implements PostAdapter.OnPostClickLis
         swipeRefreshLayout.setOnRefreshListener(() -> {
             // 刷新时重置保存的位置
             scrollPosition = 0;
+            scrollOffsets = null;
             shouldRestorePosition = false;
             viewModel.refreshData();
         });
@@ -194,17 +178,24 @@ public class HomeFragment extends Fragment implements PostAdapter.OnPostClickLis
         super.onResume();
 
         // 从详情页返回时，应用本地存储的点赞状态
-        viewModel.applyLocalLikeStatus();
+        List<Post> postList = viewModel.getPostsLiveData().getValue();
+        if (postList != null && !postList.isEmpty()) {
 
-        // 恢复之前的滚动位置
-        if (scrollPosition > 0 && recyclerView != null) {
+            viewModel.applyLocalLikeStatus();
+        }
+
+        // 精确恢复之前保存的滚动位置
+        if (shouldRestorePosition && scrollPosition >= 0 && recyclerView != null) {
             StaggeredGridLayoutManager layoutManager = (StaggeredGridLayoutManager) recyclerView.getLayoutManager();
             if (layoutManager != null) {
-                recyclerView.post(() -> {
-                    // 为了更好的用户体验，可以滚动到比保存位置稍前的位置
-                    int positionToScroll = Math.max(0, scrollPosition - 2);
-                    layoutManager.scrollToPosition(positionToScroll);
-                });
+                // 确保位置有效
+                int itemCount = postAdapter.getItemCount();
+                if (scrollPosition < itemCount) {
+                    recyclerView.post(() -> {
+                        // 使用scrollToPositionWithOffset进行精确滚动
+                        layoutManager.scrollToPositionWithOffset(scrollPosition, scrollOffsets != null && scrollOffsets.length > 0 ? scrollOffsets[0] : 0);
+                    });
+                }
             }
         }
     }
@@ -234,9 +225,44 @@ public class HomeFragment extends Fragment implements PostAdapter.OnPostClickLis
         }
     }
 
+    public void saveCurrentScrollPosition() {
+        if (recyclerView != null) {
+            StaggeredGridLayoutManager layoutManager = (StaggeredGridLayoutManager) recyclerView.getLayoutManager();
+            if (layoutManager != null) {
+                int[] firstVisiblePositions = layoutManager.findFirstVisibleItemPositions(null);
+                if (firstVisiblePositions.length > 0) {
+                    // 取最小的位置
+                    int minPosition = firstVisiblePositions[0];
+                    for (int pos : firstVisiblePositions) {
+                        minPosition = Math.min(minPosition, pos);
+                    }
+                    scrollPosition = minPosition;
+                    // 保存第一个可见项的偏移量
+                    View firstVisibleView = layoutManager.findViewByPosition(minPosition);
+                    if (firstVisibleView != null) {
+                        // 保存每个列的偏移量
+                        scrollOffsets = new int[layoutManager.getSpanCount()];
+                        for (int i = 0; i < layoutManager.getSpanCount(); i++) {
+                            int pos = firstVisiblePositions[i];
+                            if (pos != RecyclerView.NO_POSITION) {
+                                View view = layoutManager.findViewByPosition(pos);
+                                if (view != null) {
+                                    scrollOffsets[i] = view.getTop();
+                                }
+                            }
+                        }
+                    }
+                    shouldRestorePosition = true;
+                }
+            }
+        }
+    }
+
     @Override
     public void onPostClick(Post post) {
         try {
+            // 在跳转到详情页之前，保存当前滚动位置
+
             // 使用getParentFragmentManager代替getFragmentManager
             FragmentManager fragmentManager = getParentFragmentManager();
             if (fragmentManager != null) {

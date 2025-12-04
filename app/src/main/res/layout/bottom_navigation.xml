@@ -37,7 +37,6 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
             android:text="@string/tab_home"
-            android:textColor="#000000"
             android:textSize="17sp" />
     </LinearLayout>
 
@@ -50,8 +49,7 @@
         android:gravity="center"
         android:orientation="vertical"
         tools:layout_editor_absoluteX="95dp"
-        tools:layout_editor_absoluteY="0dp"
-        android:alpha="0.6">
+        tools:layout_editor_absoluteY="0dp">
 
         <!--        <ImageView-->
         <!--            android:layout_width="24dp"-->
@@ -64,7 +62,6 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
             android:text="@string/tab_friends"
-            android:textColor="#161823"
             android:textSize="17sp" />
     </LinearLayout>
 
@@ -119,9 +116,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
             android:text="@string/tab_messages"
-            android:textColor="#161823"
-            android:textSize="17sp"
-            android:alpha="0.6"/>
+            android:textSize="17sp" />
     </LinearLayout>
 
     <LinearLayout
@@ -145,8 +140,6 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
             android:text="@string/tab_profile"
-            android:textColor="#161823"
-            android:textSize="17sp"
-            android:alpha="0.6"/>
+            android:textSize="17sp" />
     </LinearLayout>
 </LinearLayout >
