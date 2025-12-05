@@ -59,6 +59,10 @@ android {
         // 指定生成的类文件的目标 Java 版本
         targetCompatibility = JavaVersion.VERSION_11
     }
+
+    buildFeatures {
+        viewBinding = true
+    }
 }
 
 // 依赖项配置块 - 声明项目所需的外部库和模块
@@ -75,7 +79,7 @@ dependencies {
     // 实现 ConstraintLayout 布局库
     implementation(libs.constraintlayout)
     implementation(libs.swiperefreshlayout)
-
+    implementation(libs.vectordrawable)
     // 测试依赖 - JUnit 测试框架
     testImplementation(libs.junit)
 
@@ -107,4 +111,5 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel:2.5.1")
     implementation("androidx.lifecycle:lifecycle-livedata:2.5.1")
     implementation("androidx.lifecycle:lifecycle-common-java8:2.5.1")
+
 }

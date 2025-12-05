@@ -9,6 +9,7 @@ import com.example.myapplication.model.Post;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -25,6 +26,8 @@ import java.util.List;
 public class PostRepository {
     private static final String TAG = "PostRepository";
     public static final String PREF_LIKED_POSTS = "like_posts";
+
+    public static final String PREF_FOLLOWED_AUTHORS = "followed_authors";
     public static final String API_URL = "https://college-training-camp.bytedance.com/feed/?count=10&accept_video_clip=false";
     private SharedPreferences prefs;
     private Context context;
@@ -58,6 +61,21 @@ public class PostRepository {
             if (isLikedLocally != post.isLiked()) {
                 post.setLiked(isLikedLocally);
                 post.setLikeCount(post.getLikeCount() + (isLikedLocally ? 1 : -1));
+            }
+        }
+    }
+
+    // 加载本地关注状态
+    public void applyLocalFollowStatus(List<Post> posts) {
+        if (context == null || posts.isEmpty()) return;
+        SharedPreferences prefs = context.getSharedPreferences(PREF_FOLLOWED_AUTHORS, Context.MODE_PRIVATE);
+        for (Post post : posts) {
+            if (post.getAuthor() != null && post.getAuthor().getUser_id() != null) {
+                // 检查作者是否被关注
+                boolean isFollowing = prefs.getBoolean(post.getAuthor().getUser_id(), false);
+                // 由于Post类中没有直接存储关注状态的字段
+                // 这个方法主要用于确保关注状态的本地存储被正确访问
+                // 实际的关注状态使用在PostDetailViewModel中单独管理
             }
         }
     }
@@ -337,8 +355,9 @@ public class PostRepository {
             }
 
             JsonArray postsArray = cacheObject.getAsJsonArray("posts");
-            List<Post> cachedPosts = new ArrayList<>();
-            // 解析缓存数据...
+            // 转换为List<Post>
+            List<Post> cachedPosts = gson.fromJson(postsArray, new TypeToken<List<Post>>() {}.getType());
+
             return cachedPosts;
         } catch (Exception e) {
             Log.e(TAG, "读取缓存失败", e);

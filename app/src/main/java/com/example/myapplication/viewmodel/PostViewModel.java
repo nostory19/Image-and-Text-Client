@@ -67,19 +67,20 @@ public class PostViewModel extends AndroidViewModel {
         isLoadingLiveData.setValue(true);
         isRefreshingLiveData.setValue(true);
         isErrorLiveData.setValue(false);
-        // 先尝试从缓存加载数据，立即展示给用户
-        List<Post> cachedPosts = repository.readPostsFromCache();
-        if (cachedPosts != null && !cachedPosts.isEmpty()) {
-            // 应用本地存储的点赞状态
-            repository.applyLocalLikeStatus(cachedPosts);
-
-            posts.clear();
-            posts.addAll(cachedPosts);
-            postsLiveData.setValue(new ArrayList<>(posts));
-
-            // 通知UI缓存已加载，正在刷新最新数据
-            hasMoreDataLiveData.setValue(true);
-        }
+        // 直接刷新不需要缓存
+//        // 先尝试从缓存加载数据，立即展示给用户
+//        List<Post> cachedPosts = repository.readPostsFromCache();
+//        if (cachedPosts != null && !cachedPosts.isEmpty()) {
+//            // 应用本地存储的点赞状态
+//            repository.applyLocalLikeStatus(cachedPosts);
+//
+//            posts.clear();
+//            posts.addAll(cachedPosts);
+//            postsLiveData.setValue(new ArrayList<>(posts));
+//
+//            // 通知UI缓存已加载，正在刷新最新数据
+//            hasMoreDataLiveData.setValue(true);
+//        }
         // 异步请求最新数据
         repository.fetchPosts(true, new PostRepository.PostCallback() {
             @Override
@@ -87,7 +88,7 @@ public class PostViewModel extends AndroidViewModel {
                 repository.savePostsToCache(result);
                 // 应用本地存储的点赞状态
                 repository.applyLocalLikeStatus(result);
-
+//                repository.applyLocalFollowStatus(result);
                 posts.clear();
                 posts.addAll(result);
                 postsLiveData.setValue(new ArrayList<>(posts));
@@ -106,17 +107,38 @@ public class PostViewModel extends AndroidViewModel {
 
                 // 加载失败时显示测试数据
                 posts.clear();
-                List<Post> testPosts = repository.generateTestPosts(10);
-                posts.addAll(testPosts);
-                postsLiveData.setValue(new ArrayList<>(posts));
+//                List<Post> testPosts = repository.generateTestPosts(10);
+                List<Post> cachedPosts = repository.readPostsFromCache();
+                if (cachedPosts != null && !cachedPosts.isEmpty()) {
+                    // 应用本地存储的点赞状态
+                    repository.applyLocalLikeStatus(cachedPosts);
+//                    repository.applyLocalFollowStatus(cachedPosts);
+                    posts.clear();
+                    posts.addAll(cachedPosts);
+                    postsLiveData.setValue(new ArrayList<>(posts));
 
-                hasMoreData = true;
-                hasMoreDataLiveData.setValue(true);
+                    hasMoreData = true;
+                    hasMoreDataLiveData.setValue(true);
 
-                isLoading = false;
-                isLoadingLiveData.setValue(false);
-                isRefreshingLiveData.setValue(false);
-                isErrorLiveData.setValue(false); // 不显示错误状态，因为使用了测试数据
+                    isLoading = false;
+                    isLoadingLiveData.setValue(false);
+                    isRefreshingLiveData.setValue(false);
+                    isErrorLiveData.setValue(false); // 不显示错误状态，因为使用了缓存数据
+                } else {
+                    // 如果没有缓存，才显示测试数据
+                    posts.clear();
+                    List<Post> testPosts = repository.generateTestPosts(10);
+                    posts.addAll(testPosts);
+                    postsLiveData.setValue(new ArrayList<>(posts));
+
+                    hasMoreData = true;
+                    hasMoreDataLiveData.setValue(true);
+
+                    isLoading = false;
+                    isLoadingLiveData.setValue(false);
+                    isRefreshingLiveData.setValue(false);
+                    isErrorLiveData.setValue(false); // 不显示错误状态，因为使用了测试数据
+                }
             }
         });
     }

@@ -1,5 +1,6 @@
 package com.example.myapplication;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -36,10 +37,10 @@ public class HomeFragment extends Fragment implements PostAdapter.OnPostClickLis
 
     private PostViewModel viewModel;
     private boolean firstLoad = true;
-    private int scrollPosition = 0;
+//    private int scrollPosition = 0;
     // 保存滚动偏移量
-    private int[] scrollOffsets;
-    private boolean shouldRestorePosition = false;
+//    private int[] scrollOffsets;
+//    private boolean shouldRestorePosition = false;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -193,9 +194,9 @@ public class HomeFragment extends Fragment implements PostAdapter.OnPostClickLis
         // 设置下拉刷新
         swipeRefreshLayout.setOnRefreshListener(() -> {
             // 刷新时重置保存的位置
-            scrollPosition = 0;
-            scrollOffsets = null;
-            shouldRestorePosition = false;
+//            scrollPosition = 0;
+//            scrollOffsets = null;
+//            shouldRestorePosition = false;
             viewModel.refreshData();
         });
         swipeRefreshLayout.setColorSchemeResources(R.color.colorAccent);
@@ -215,20 +216,20 @@ public class HomeFragment extends Fragment implements PostAdapter.OnPostClickLis
             viewModel.applyLocalLikeStatus();
         }
 
-        // 精确恢复之前保存的滚动位置
-        if (shouldRestorePosition && scrollPosition >= 0 && recyclerView != null) {
-            StaggeredGridLayoutManager layoutManager = (StaggeredGridLayoutManager) recyclerView.getLayoutManager();
-            if (layoutManager != null) {
-                // 确保位置有效
-                int itemCount = postAdapter.getItemCount();
-                if (scrollPosition < itemCount) {
-                    recyclerView.post(() -> {
-                        // 使用scrollToPositionWithOffset进行精确滚动
-                        layoutManager.scrollToPositionWithOffset(scrollPosition, scrollOffsets != null && scrollOffsets.length > 0 ? scrollOffsets[0] : 0);
-                    });
-                }
-            }
-        }
+//        // 精确恢复之前保存的滚动位置
+//        if (shouldRestorePosition && scrollPosition >= 0 && recyclerView != null) {
+//            StaggeredGridLayoutManager layoutManager = (StaggeredGridLayoutManager) recyclerView.getLayoutManager();
+//            if (layoutManager != null) {
+//                // 确保位置有效
+//                int itemCount = postAdapter.getItemCount();
+//                if (scrollPosition < itemCount) {
+//                    recyclerView.post(() -> {
+//                        // 使用scrollToPositionWithOffset进行精确滚动
+//                        layoutManager.scrollToPositionWithOffset(scrollPosition, scrollOffsets != null && scrollOffsets.length > 0 ? scrollOffsets[0] : 0);
+//                    });
+//                }
+//            }
+//        }
     }
 
     // 获取最后一个可见item的位置
@@ -256,57 +257,62 @@ public class HomeFragment extends Fragment implements PostAdapter.OnPostClickLis
         }
     }
 
-    public void saveCurrentScrollPosition() {
-        if (recyclerView != null) {
-            StaggeredGridLayoutManager layoutManager = (StaggeredGridLayoutManager) recyclerView.getLayoutManager();
-            if (layoutManager != null) {
-                int[] firstVisiblePositions = layoutManager.findFirstVisibleItemPositions(null);
-                if (firstVisiblePositions.length > 0) {
-                    // 取最小的位置
-                    int minPosition = firstVisiblePositions[0];
-                    for (int pos : firstVisiblePositions) {
-                        minPosition = Math.min(minPosition, pos);
-                    }
-                    scrollPosition = minPosition;
-                    // 保存第一个可见项的偏移量
-                    View firstVisibleView = layoutManager.findViewByPosition(minPosition);
-                    if (firstVisibleView != null) {
-                        // 保存每个列的偏移量
-                        scrollOffsets = new int[layoutManager.getSpanCount()];
-                        for (int i = 0; i < layoutManager.getSpanCount(); i++) {
-                            int pos = firstVisiblePositions[i];
-                            if (pos != RecyclerView.NO_POSITION) {
-                                View view = layoutManager.findViewByPosition(pos);
-                                if (view != null) {
-                                    scrollOffsets[i] = view.getTop();
-                                }
-                            }
-                        }
-                    }
-                    shouldRestorePosition = true;
-                }
-            }
-        }
-    }
+//    public void saveCurrentScrollPosition() {
+//        if (recyclerView != null) {
+//            StaggeredGridLayoutManager layoutManager = (StaggeredGridLayoutManager) recyclerView.getLayoutManager();
+//            if (layoutManager != null) {
+//                int[] firstVisiblePositions = layoutManager.findFirstVisibleItemPositions(null);
+//                if (firstVisiblePositions.length > 0) {
+//                    // 取最小的位置
+//                    int minPosition = firstVisiblePositions[0];
+//                    for (int pos : firstVisiblePositions) {
+//                        minPosition = Math.min(minPosition, pos);
+//                    }
+//                    scrollPosition = minPosition;
+//                    // 保存第一个可见项的偏移量
+//                    View firstVisibleView = layoutManager.findViewByPosition(minPosition);
+//                    if (firstVisibleView != null) {
+//                        // 保存每个列的偏移量
+//                        scrollOffsets = new int[layoutManager.getSpanCount()];
+//                        for (int i = 0; i < layoutManager.getSpanCount(); i++) {
+//                            int pos = firstVisiblePositions[i];
+//                            if (pos != RecyclerView.NO_POSITION) {
+//                                View view = layoutManager.findViewByPosition(pos);
+//                                if (view != null) {
+//                                    scrollOffsets[i] = view.getTop();
+//                                }
+//                            }
+//                        }
+//                    }
+//                    shouldRestorePosition = true;
+//                }
+//            }
+//        }
+//    }
 
     @Override
     public void onPostClick(Post post) {
-        try {
-            // 在跳转到详情页之前，保存当前滚动位置
+//        try {
+//
+//            // 使用getParentFragmentManager代替getFragmentManager
+//            FragmentManager fragmentManager = getParentFragmentManager();
+//            if (fragmentManager != null) {
+//                // 替换当前Fragment为详情页
+//                PostDetailFragment fragment = PostDetailFragment.newInstance(post);
+//                fragmentManager.beginTransaction()
+//                        .replace(R.id.fragment_container, fragment)
+//                        .addToBackStack(null)
+//                        .commit();
+//            }
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            Toast.makeText(getContext(), "跳转失败，请重试", Toast.LENGTH_SHORT).show();
+//        }
 
-            // 使用getParentFragmentManager代替getFragmentManager
-            FragmentManager fragmentManager = getParentFragmentManager();
-            if (fragmentManager != null) {
-                // 替换当前Fragment为详情页
-                PostDetailFragment fragment = PostDetailFragment.newInstance(post);
-                fragmentManager.beginTransaction()
-                        .replace(R.id.fragment_container, fragment)
-                        .addToBackStack(null)
-                        .commit();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            Toast.makeText(getContext(), "跳转失败，请重试", Toast.LENGTH_SHORT).show();
-        }
+        // 改为Activity跳转
+        Intent intent = PostDetailActivity.newIntent(requireContext(), post);
+        // 设置目标Activity
+        intent.setClass(requireContext(), PostDetailActivity.class);
+        startActivity(intent);
     }
 }

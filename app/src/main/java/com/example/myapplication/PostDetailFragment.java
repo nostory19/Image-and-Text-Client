@@ -59,6 +59,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import androidx.lifecycle.LiveData;
+
+// 废弃代码
+@Deprecated
 public class PostDetailFragment extends Fragment {
     private static final String ARG_POST = "post";
 
@@ -462,10 +465,10 @@ public class PostDetailFragment extends Fragment {
     private void updateFollowButton(boolean isFollowing) {
         if (isFollowing) {
             followButton.setText("已关注");
-            followButton.setBackgroundResource(R.drawable.followed_button_bg);
+//            followButton.setBackgroundResource(R.drawable.followed_button_bg);
         } else {
             followButton.setText("关注");
-            followButton.setBackgroundResource(R.drawable.follow_button_bg);
+//            followButton.setBackgroundResource(R.drawable.follow_button_bg);
         }
     }
 
