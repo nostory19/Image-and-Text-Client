@@ -262,7 +262,7 @@ public class PostDetailFragment extends Fragment {
 
         // 观察收藏状态变化
         viewModel.getIsCollectedLiveData().observe(getViewLifecycleOwner(), isCollected -> {
-            collectIcon.setImageResource(isCollected ? R.drawable.ic_collected : R.drawable.ic_collect);
+//            collectIcon.setImageResource(isCollected ? R.drawable.ic_collected : R.drawable.ic_collect);
         });
     }
 

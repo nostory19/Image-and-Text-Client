@@ -20,6 +20,9 @@ public class PostDetailViewModel extends AndroidViewModel {
     private MutableLiveData<Boolean> isLikedLiveData = new MutableLiveData<>(false);
     private MutableLiveData<Boolean> isCollectedLiveData = new MutableLiveData<>(false);
     private MutableLiveData<Integer> likeCountLiveData = new MutableLiveData<>(0);
+    private MutableLiveData<Integer> commentCountLiveData = new MutableLiveData<>(0);
+    private MutableLiveData<Integer> collectCountLiveData = new MutableLiveData<>(0);
+    private MutableLiveData<Integer> shareCountLiveData = new MutableLiveData<>(0);
 
     private SharedPreferences followedPrefs;
     private SharedPreferences likedPrefs;
@@ -58,6 +61,14 @@ public class PostDetailViewModel extends AndroidViewModel {
             likeCount--;
         }
         likeCountLiveData.setValue(likeCount);
+        // 初始化评论数
+        commentCountLiveData.setValue(post.getCommentCount());
+        // 初始化收藏数
+        collectCountLiveData.setValue(post.getCollectCount());
+        // 初始化分享数
+        shareCountLiveData.setValue(post.getShareCount());
+
+
 
         // 初始化收藏状态（这里暂时设为false，可根据实际需求调整）
         isCollectedLiveData.setValue(false);
@@ -82,6 +93,23 @@ public class PostDetailViewModel extends AndroidViewModel {
     public LiveData<Integer> getLikeCountLiveData() {
         return likeCountLiveData;
     }
+
+    // 评论数量相关
+    public LiveData<Integer> getCommentCountLiveData() {
+        return commentCountLiveData;
+    }
+
+    // 收藏数量相关
+    public LiveData<Integer> getCollectCountLiveData() {
+        return collectCountLiveData;
+    }
+
+    // 分享数量相关
+    public LiveData<Integer> getShareCountLiveData() {
+        return shareCountLiveData;
+    }
+
+
 
     // 处理关注/取消关注
     public void toggleFollowStatus() {
@@ -121,6 +149,7 @@ public class PostDetailViewModel extends AndroidViewModel {
 
     // 处理收藏/取消收藏
     public void toggleCollectStatus() {
+
         boolean newCollectedStatus = !isCollectedLiveData.getValue();
         isCollectedLiveData.setValue(newCollectedStatus);
         // 这里可以添加收藏状态的本地存储逻辑

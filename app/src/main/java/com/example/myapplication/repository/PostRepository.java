@@ -310,6 +310,17 @@ public class PostRepository {
                         if (postObj.has("is_liked") && !postObj.get("is_liked").isJsonNull()) {
                             post.setLiked(postObj.get("is_liked").getAsBoolean());
                         }
+                        // 解析
+                        if (postObj.has("comment_count") && !postObj.get("comment_count").isJsonNull()) {
+                            post.setCommentCount(postObj.get("comment_count").getAsInt());
+                        }
+                        if (postObj.has("collect_count") && !postObj.get("collect_count").isJsonNull()) {
+                            post.setCollectCount(postObj.get("collect_count").getAsInt());
+                        }
+                        if (postObj.has("share_count") && !postObj.get("share_count").isJsonNull()) {
+                            post.setShareCount(postObj.get("share_count").getAsInt());
+                        }
+
 
                         postList.add(post);
                     }

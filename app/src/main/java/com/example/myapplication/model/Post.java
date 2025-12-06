@@ -45,6 +45,15 @@ public class Post implements Serializable {
     private boolean liked;
     private int likeCount;
 
+    // 评论数量
+    private int commentCount;
+    // 收藏数量
+    private int collectCount;
+
+    // 分享数量
+    private int shareCount;
+
+
     // 构造方法
     public Post(String post_id, String title, String content, List<Hashtag> hashtag, long create_time, Author author, List<Clip> clips, Music music) {
         this.post_id = post_id;
@@ -57,6 +66,12 @@ public class Post implements Serializable {
         this.music = music;
         this.liked = false; // 默认未点赞
         this.likeCount = 0; // 默认点赞数为0
+        // 评论数量默认0
+        this.commentCount = 0;
+        // 收藏数量默认0
+        this.collectCount = 0;
+        // 分享数量默认0
+        this.shareCount = 0;
     }
 
     // Getters and Setters
@@ -82,6 +97,18 @@ public class Post implements Serializable {
     public void setLiked(boolean liked) { this.liked = liked; }
     public int getLikeCount() { return likeCount; }
     public void setLikeCount(int likeCount) { this.likeCount = likeCount; }
+    // 评论数量相关
+    public int getCommentCount() { return commentCount; }
+    public void setCommentCount(int commentCount) { this.commentCount = commentCount; }
+
+    // 收藏数量相关
+    public int getCollectCount() { return collectCount; }
+    public void setCollectCount(int collectCount) { this.collectCount = collectCount; }
+
+    // 分享数量相关
+    public int getShareCount() { return shareCount; }
+    public void setShareCount(int shareCount) { this.shareCount = shareCount; }
+
 
     // 获取作者昵称（为兼容现有代码）
     public String getAuthorName() {

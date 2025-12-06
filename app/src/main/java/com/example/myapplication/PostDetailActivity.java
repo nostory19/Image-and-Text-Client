@@ -195,8 +195,20 @@ public class PostDetailActivity extends AppCompatActivity {
 
         // 观察收藏状态变化
         postDetailViewModel.getIsCollectedLiveData().observe(this, isCollected -> {
-            collectIcon.setImageResource(isCollected ? R.drawable.ic_collected : R.drawable.ic_collect);
+//            collectIcon.setImageResource(isCollected ? R.drawable.ic_collected : R.drawable.ic_collect);
+            collectIcon.setColorFilter(isCollected ? Color.RED : Color.TRANSPARENT);
+            collectCount.setText(String.valueOf(postDetailViewModel.getCollectCountLiveData().getValue()));
+
         });
+        // 观察评论状态
+        postDetailViewModel.getCommentCountLiveData().observe(this, count -> {
+            commentCount.setText(String.valueOf(postDetailViewModel.getCommentCountLiveData().getValue()));
+        });
+        // 观察分享状态变化
+        postDetailViewModel.getShareCountLiveData().observe(this, count -> {
+            shareCount.setText(String.valueOf(postDetailViewModel.getShareCountLiveData().getValue()));
+        });
+
     }
 
     // 在setupImageAdapter方法中调用updateImageContainerSize
@@ -421,10 +433,10 @@ public class PostDetailActivity extends AppCompatActivity {
     private void updateLikeStatus(boolean liked) {
         if (likeIcon != null) {
             if (liked) {
-                likeIcon.setImageResource(R.drawable.ic_s_s_heart_outlined_16);
+                likeIcon.setImageResource(R.drawable.ic_like);
                 likeIcon.setColorFilter(Color.RED);
             } else {
-                likeIcon.setImageResource(R.drawable.ic_s_s_heart_outlined_16);
+                likeIcon.setImageResource(R.drawable.ic_like);
                 likeIcon.clearColorFilter();
             }
         }

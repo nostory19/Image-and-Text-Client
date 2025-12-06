@@ -295,10 +295,10 @@
             app:layout_constraintTop_toTopOf="parent">
 
             <ImageView
-                android:layout_width="24dp"
+                android:layout_width="wrap_content"
                 android:layout_height="24dp"
                 android:contentDescription="评论"
-                android:src="@drawable/comment_icon" />
+                android:src="@drawable/ic_s_s_msg_filled_16" />
 
             <TextView
                 android:id="@+id/comment_count"
@@ -325,7 +325,7 @@
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:contentDescription="收藏"
-                android:src="@drawable/star_icon" />
+                android:src="@drawable/ic_start" />
 
             <TextView
                 android:id="@+id/collect_count"
