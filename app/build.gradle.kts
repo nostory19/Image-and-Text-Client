@@ -113,4 +113,9 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-common-java8:2.5.1")
     implementation("com.google.android.flexbox:flexbox:3.0.0")
 
+    // 添加ExoPlayer音乐播放器依赖
+    implementation("androidx.media3:media3-exoplayer:1.3.1")
+    implementation("androidx.media3:media3-ui:1.3.1")
+    implementation("androidx.media3:media3-session:1.3.1")
+
 }

@@ -1,5 +1,6 @@
 package com.example.myapplication;
 
+import android.app.ActivityOptions;
 import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
@@ -7,6 +8,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -27,6 +29,9 @@ import com.example.myapplication.viewmodel.PostViewModel;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import android.app.ActivityOptions;
+import android.os.Bundle;
 
 public class HomeFragment extends Fragment implements PostAdapter.OnPostClickListener {
     private RecyclerView recyclerView;
@@ -348,27 +353,52 @@ public class HomeFragment extends Fragment implements PostAdapter.OnPostClickLis
 
     @Override
     public void onPostClick(Post post) {
-//        try {
-//
-//            // 使用getParentFragmentManager代替getFragmentManager
-//            FragmentManager fragmentManager = getParentFragmentManager();
-//            if (fragmentManager != null) {
-//                // 替换当前Fragment为详情页
-//                PostDetailFragment fragment = PostDetailFragment.newInstance(post);
-//                fragmentManager.beginTransaction()
-//                        .replace(R.id.fragment_container, fragment)
-//                        .addToBackStack(null)
-//                        .commit();
-//            }
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            Toast.makeText(getContext(), "跳转失败，请重试", Toast.LENGTH_SHORT).show();
-//        }
+        // 找到被点击的卡片视图
+        RecyclerView.ViewHolder holder = recyclerView.findViewHolderForAdapterPosition(getPostPosition(post));
+        if (holder instanceof PostAdapter.PostViewHolder) {
+            PostAdapter.PostViewHolder postViewHolder = (PostAdapter.PostViewHolder) holder;
+            ImageView postImage = postViewHolder.postImage;
 
-        // 改为Activity跳转
-        Intent intent = PostDetailActivity.newIntent(requireContext(), post);
-        // 设置目标Activity
-        intent.setClass(requireContext(), PostDetailActivity.class);
-        startActivity(intent);
+            // 设置共享元素转场
+            Intent intent = PostDetailActivity.newIntent(requireContext(), post);
+            intent.setClass(requireContext(), PostDetailActivity.class);
+
+            // 创建共享元素选项
+            Bundle options = null;
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                options = ActivityOptions.makeSceneTransitionAnimation(
+                        requireActivity(),
+                        postImage,
+                        "post_image_" + post.getPost_id()  + "_0"
+                ).toBundle();
+            }
+
+            if (options != null) {
+                startActivity(intent, options);
+            } else {
+                startActivity(intent);
+            }
+        } else {
+            // 备用方案：直接启动Activity
+            Intent intent = PostDetailActivity.newIntent(requireContext(), post);
+            intent.setClass(requireContext(), PostDetailActivity.class);
+            startActivity(intent);
+        }
+//        // 改为Activity跳转
+//        Intent intent = PostDetailActivity.newIntent(requireContext(), post);
+//        // 设置目标Activity
+//        intent.setClass(requireContext(), PostDetailActivity.class);
+//        startActivity(intent);
+    }
+
+    // 获取帖子在列表中的位置
+    private int getPostPosition(Post post) {
+        List<Post> currentPosts = postAdapter.getPosts();
+        for (int i = 0; i < currentPosts.size(); i++) {
+            if (currentPosts.get(i).getPost_id().equals(post.getPost_id())) {
+                return i;
+            }
+        }
+        return -1;
     }
 }

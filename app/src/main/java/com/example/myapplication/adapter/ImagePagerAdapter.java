@@ -84,8 +84,33 @@ public class ImagePagerAdapter extends RecyclerView.Adapter<ImagePagerAdapter.Im
 
     @Override
     public void onBindViewHolder(@NonNull ImageViewHolder holder, int position) {
+//        if (clips != null && position < clips.size()) {
+//            holder.bind(clips.get(position), aspectRatio, postId);
+//        }
+
         if (clips != null && position < clips.size()) {
-            holder.bind(clips.get(position), aspectRatio, postId);
+            Post.Clip clip = clips.get(position);
+            if (clip.getType() == 0 && clip.getUrl() != null) {
+                // 设置图片过渡名称
+                holder.imageView.setTransitionName("post_image_" + postId + "_" + position);
+
+                // 确保图片视图可见
+                holder.imageView.setVisibility(View.VISIBLE);
+                holder.loadingProgress.setVisibility(View.GONE);
+                holder.errorImage.setVisibility(View.GONE);
+
+                Glide.with(holder.imageView.getContext())
+                        .load(clip.getUrl())
+                        .placeholder(R.drawable.ic_launcher_background)
+                        .error(R.drawable.ic_launcher_foreground)
+                        .centerCrop()
+                        .into(holder.imageView);
+            } else {
+                // 处理非图片内容或URL为空的情况
+                holder.imageView.setVisibility(View.GONE);
+                holder.loadingProgress.setVisibility(View.GONE);
+                holder.errorImage.setVisibility(View.VISIBLE);
+            }
         }
     }
 

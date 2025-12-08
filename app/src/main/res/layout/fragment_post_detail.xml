@@ -91,6 +91,7 @@
 
         <!-- 添加一个LinearLayout作为ScrollView的唯一直接子元素 -->
         <LinearLayout
+            android:id="@+id/content_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
@@ -108,33 +109,40 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content" />
 
-                <!-- 进度指示器 -->
-                <!--                <LinearLayout-->
-                <!--                    android:layout_width="match_parent"-->
-                <!--                    android:layout_height="wrap_content"-->
-                <!--                    android:layout_alignBottom="@id/image_view_pager"-->
-                <!--                    android:background="#80000000"-->
-                <!--                    android:orientation="vertical"-->
-                <!--                    android:padding="8dp">-->
+<!--                <RelativeLayout-->
+<!--                    android:layout_width="match_parent"-->
+<!--                    android:layout_height="wrap_content">-->
 
-                <!--                    <TextView-->
-                <!--                        android:id="@+id/progress_text"-->
-                <!--                        android:layout_width="wrap_content"-->
-                <!--                        android:layout_height="wrap_content"-->
-                <!--                        android:layout_gravity="center"-->
-                <!--                        android:textColor="#FFFFFF"-->
-                <!--                        android:textSize="12sp"-->
-                <!--                        tools:text="1/3" />-->
+<!--                    <ImageView-->
+<!--                        android:id="@+id/mute_button"-->
+<!--                        android:layout_width="40dp"-->
+<!--                        android:layout_height="40dp"-->
+<!--                        android:layout_alignParentEnd="true"-->
+<!--                        android:background="@drawable/circle_background"-->
+<!--                        android:padding="8dp"-->
+<!--                        android:src="@drawable/ic_volume_up"-->
+<!--                        android:tint="@color/white" />-->
+<!--                </RelativeLayout>-->
+<!--                <LinearLayout-->
+<!--                    android:layout_width="match_parent"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:layout_alignBottom="@id/image_view_pager"-->
+<!--                    android:background="#80000000"-->
+<!--                    android:orientation="vertical"-->
+<!--                    android:padding="8dp">-->
 
-                <!--                    <ProgressBar-->
-                <!--                        android:id="@+id/progress_bar"-->
-                <!--                        style="@android:style/Widget.ProgressBar.Horizontal"-->
-                <!--                        android:layout_width="match_parent"-->
-                <!--                        android:layout_height="2dp"-->
-                <!--                        android:layout_marginTop="4dp"-->
-                <!--                        android:progress="33" />-->
-                <!--                </LinearLayout>-->
+<!--                    &lt;!&ndash; 将单个ProgressBar替换为水平LinearLayout，用于放置小圆点指示器 &ndash;&gt;-->
+<!--                    <LinearLayout-->
+<!--                        android:id="@+id/progress_dots_container"-->
+<!--                        android:layout_width="match_parent"-->
+<!--                        android:layout_height="8dp"-->
+<!--                        android:layout_marginTop="4dp"-->
+<!--                        android:gravity="center"-->
+<!--                        android:orientation="horizontal"-->
+<!--                        android:weightSum="1" />-->
+<!--                </LinearLayout>-->
                 <LinearLayout
+                    android:id="@+id/bottom_bar"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_alignBottom="@id/image_view_pager"
@@ -142,25 +150,31 @@
                     android:orientation="vertical"
                     android:padding="8dp">
 
-                    <!--                    <TextView-->
-                    <!--                        android:id="@+id/progress_text"-->
-                    <!--                        android:layout_width="wrap_content"-->
-                    <!--                        android:layout_height="wrap_content"-->
-                    <!--                        android:layout_gravity="center"-->
-                    <!--                        android:textColor="#FFFFFF"-->
-                    <!--                        android:textSize="12sp"-->
-                    <!--                        tools:text="1/3" />-->
-
-                    <!-- 将单个ProgressBar替换为水平LinearLayout，用于放置小圆点指示器 -->
                     <LinearLayout
                         android:id="@+id/progress_dots_container"
                         android:layout_width="match_parent"
                         android:layout_height="8dp"
                         android:layout_marginTop="4dp"
                         android:gravity="center"
-                        android:orientation="horizontal"
-                        android:weightSum="1" />
+                        android:orientation="horizontal" />
                 </LinearLayout>
+
+                <!-- 将按钮放到最外层 RelativeLayout，并对齐到底部bar的右上角 -->
+                <ImageView
+                    android:id="@+id/mute_button"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_alignTop="@id/bottom_bar"
+                    android:layout_alignEnd="@id/bottom_bar"
+                    android:layout_marginTop="-40dp"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/circle_background"
+                android:padding="8dp"
+                android:src="@drawable/ic_volume_up"
+                android:tint="@color/white" />
+                <!-- 进度点容器 -->
+
+
 
             </RelativeLayout>
 

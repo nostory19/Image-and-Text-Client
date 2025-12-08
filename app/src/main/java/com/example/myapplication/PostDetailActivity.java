@@ -7,12 +7,16 @@ import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
+import android.media.AudioManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.transition.Fade;
+import android.transition.Transition;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -81,6 +85,11 @@ public class PostDetailActivity extends AppCompatActivity {
     private TextView likeCount;
     private LinearLayout progressDotsContainer;
 
+    // 音乐播放相关
+    private MusicPlayerManager musicPlayer;
+    private ImageView muteButton;
+    private boolean isActivityResumed = false;
+
     // 静态方法，用于创建带有Post参数的Intent
     public static Intent newIntent(Context context, Post post) {
         Intent intent = new Intent(context, PostDetailActivity.class);
@@ -91,7 +100,15 @@ public class PostDetailActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // 设置音频集点策略
+        setVolumeControlStream(AudioManager.STREAM_MUSIC);
 
+        // 设置进入和退出转场动画
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            getWindow().requestFeature(Window.FEATURE_ACTIVITY_TRANSITIONS);
+            getWindow().setEnterTransition(new Fade());
+            getWindow().setExitTransition(new Fade());
+        }
         // 加载布局
         rootView = getLayoutInflater().inflate(R.layout.fragment_post_detail, null);
         setContentView(rootView);
@@ -110,12 +127,167 @@ public class PostDetailActivity extends AppCompatActivity {
 
         // 初始化视图组件
         initViews(rootView);
-
+        // 初始化音乐播放器
+        musicPlayer = MusicPlayerManager.getInstance(this);
         // 观察数据
         observeViewModel();
 
         // 设置事件监听
         setupEventListeners();
+
+        // 延迟设置共享元素转场
+        setupSharedElementTransition(post);
+    }
+
+    // 自定义缩放动画
+    private void setupCustomScaleAnimation() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            Transition transition = getWindow().getSharedElementEnterTransition();
+            if (transition != null) {
+                // 添加缩放变换，使放大效果更明显
+                transition.addListener(new Transition.TransitionListener() {
+                    @Override
+                    public void onTransitionStart(Transition transition) {
+                        // 在转场开始时应用初始缩放
+                        if (imageViewPager != null) {
+                            imageViewPager.setScaleX(0.8f);
+                            imageViewPager.setScaleY(0.8f);
+                        }
+                    }
+
+                    @Override
+                    public void onTransitionEnd(Transition transition) {
+                        // 转场结束时恢复正常大小
+                        if (imageViewPager != null) {
+                            imageViewPager.animate()
+                                    .scaleX(1f)
+                                    .scaleY(1f)
+                                    .setDuration(200)
+                                    .start();
+                        }
+                    }
+
+                    @Override
+                    public void onTransitionCancel(Transition transition) {
+                        if (imageViewPager != null) {
+                            imageViewPager.setScaleX(1f);
+                            imageViewPager.setScaleY(1f);
+                        }
+                    }
+
+                    @Override
+                    public void onTransitionPause(Transition transition) {
+                    }
+
+                    @Override
+                    public void onTransitionResume(Transition transition) {
+                    }
+                });
+            }
+        }
+    }
+    // 设置共享元素转场
+    // 设置共享元素转场
+//    private void setupSharedElementTransition(Post post) {
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+//            // 延迟执行，确保ViewPager已经初始化
+//            imageViewPager.post(() -> {
+//                if (imageAdapter != null && imageAdapter.getItemCount() > 0) {
+//                    // 设置ViewPager的过渡名称
+
+    /// /                    imageViewPager.setTransitionName("post_image_" + post.getPost_id());
+//
+//                    // 设置ViewPager中第一个图片的过渡名称
+//                    View firstImage = imageViewPager.getChildAt(0);
+//                    if (firstImage != null) {
+//                        firstImage.setTransitionName("post_image_" + post.getPost_id() + "_0");
+//                    }
+//                    // 设置进入动画
+//                    Transition transition = getWindow().getSharedElementEnterTransition();
+//                    if (transition != null) {
+//                        transition.setDuration(400);
+//                        transition.setInterpolator(new DecelerateInterpolator());
+//                        transition.addListener(new Transition.TransitionListener() {
+//                            @Override
+//                            public void onTransitionStart(Transition transition) {
+//                                // 转场开始时只隐藏非图片内容，保持图片可见
+//                                View contentContainer = rootView.findViewById(R.id.content_container);
+//                                View bottomSection = rootView.findViewById(R.id.interaction_section);
+//
+//                                if (contentContainer != null) {
+//                                    contentContainer.setAlpha(0f);
+//                                }
+//                                if (bottomSection != null) {
+//                                    bottomSection.setAlpha(0f);
+//                                }
+//                                // 确保图片容器可见
+//                                if (imageViewPager != null) {
+//                                    imageViewPager.setAlpha(1f);
+//                                }
+//                            }
+//
+//                            @Override
+//                            public void onTransitionEnd(Transition transition) {
+//                                // 转场结束时渐显其他内容
+//                                animateContentAppearance();
+//                            }
+//
+//                            @Override
+//                            public void onTransitionCancel(Transition transition) {
+//                                // 转场取消时确保所有内容可见
+//                                View contentContainer = rootView.findViewById(R.id.content_container);
+//                                View bottomSection = rootView.findViewById(R.id.interaction_section);
+//                                if (contentContainer != null) contentContainer.setAlpha(1f);
+//                                if (bottomSection != null) bottomSection.setAlpha(1f);
+//                            }
+//
+//                            @Override
+//                            public void onTransitionPause(Transition transition) {}
+//
+//                            @Override
+//                            public void onTransitionResume(Transition transition) {}
+//                        });
+//                    }
+//                }
+//            });
+//        }
+//    }
+    private void setupSharedElementTransition(Post post) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            // 延迟执行，确保ViewPager已经初始化
+            imageViewPager.post(() -> {
+                if (imageAdapter != null && imageAdapter.getItemCount() > 0) {
+                    // 设置ViewPager中第一个图片的过渡名称
+                    View firstImage = imageViewPager.getChildAt(0);
+                    if (firstImage != null) {
+                        firstImage.setTransitionName("post_image_" + post.getPost_id() + "_0");
+                    }
+
+                    // 增强进入动画效果
+                    setupCustomScaleAnimation();
+
+                    // ... 其余代码保持不变 ...
+                }
+            });
+        }
+    }
+
+    // 动画内容渐显
+    // 动画内容渐显
+    private void animateContentAppearance() {
+        View contentContainer = rootView.findViewById(R.id.content_container);
+        View bottomSection = rootView.findViewById(R.id.interaction_section);
+
+        if (contentContainer != null && bottomSection != null) {
+            ObjectAnimator contentAlpha = ObjectAnimator.ofFloat(contentContainer, "alpha", 0f, 1f);
+            ObjectAnimator bottomAlpha = ObjectAnimator.ofFloat(bottomSection, "alpha", 0f, 1f);
+
+            AnimatorSet animatorSet = new AnimatorSet();
+            animatorSet.setDuration(300);
+            animatorSet.setInterpolator(new DecelerateInterpolator());
+            animatorSet.playTogether(contentAlpha, bottomAlpha);
+            animatorSet.start();
+        }
     }
 
     private void initViews(View view) {
@@ -127,7 +299,8 @@ public class PostDetailActivity extends AppCompatActivity {
         // 图片容器
         imageViewPager = view.findViewById(R.id.image_view_pager);
         progressDotsContainer = view.findViewById(R.id.progress_dots_container);
-
+        // 静音按钮
+        muteButton = view.findViewById(R.id.mute_button);
         // 内容区
         postTitle = view.findViewById(R.id.post_title);
         postContent = view.findViewById(R.id.post_content);
@@ -178,7 +351,6 @@ public class PostDetailActivity extends AppCompatActivity {
         postDetailViewModel.getIsFollowingLiveData().observe(this, isFollowing -> {
             updateFollowButton(isFollowing);
         });
-
 
 
         // 观察点赞状态变化
@@ -264,6 +436,7 @@ public class PostDetailActivity extends AppCompatActivity {
             imageViewPager.setLayoutParams(layoutParams);
         }
     }
+
     // 添加一个新方法来初始化小圆点指示器
     private void initProgressDots(int count) {
         // 清除现有指示器
@@ -469,6 +642,7 @@ public class PostDetailActivity extends AppCompatActivity {
             updateButtonBorderColor(Color.parseColor("#fe2c55"));
         }
     }
+
     // 动态更新边框颜色的辅助方法
     private void updateButtonBorderColor(int color) {
         // 方法1：直接操作GradientDrawable（如果背景是Shape）
@@ -485,10 +659,18 @@ public class PostDetailActivity extends AppCompatActivity {
             followButton.setBackground(drawable);
         }
     }
+
     private void setupEventListeners() {
         // 返回按钮
-        backButton.setOnClickListener(v -> onBackPressed());
-
+//        backButton.setOnClickListener(v -> onBackPressed());
+        backButton.setOnClickListener(v -> {
+            // 执行退出动画
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                finishAfterTransition();
+            } else {
+                finish();
+            }
+        });
         // 关注按钮
         // 如果布局中存在follow_button，可以添加以下代码
 
@@ -514,6 +696,62 @@ public class PostDetailActivity extends AppCompatActivity {
 
         // 分享按钮
         shareButton.setOnClickListener(v -> handleShare());
+
+        // 静音按钮点击
+        muteButton.setOnClickListener(v -> {
+            musicPlayer.toggleMute();
+            updateMuteButton();
+        });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        isActivityResumed = true;
+
+        // 恢复音乐播放
+        if (musicPlayer != null) {
+            musicPlayer.resume();
+        }
+
+        // 更新静音按钮状态
+        updateMuteButton();
+
+        // 开始播放音乐（如果有）
+        Post post = postDetailViewModel.getPostLiveData().getValue();
+        if (post != null && post.getMusic() != null) {
+            musicPlayer.playMusic(post);
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        isActivityResumed = false;
+
+        // 暂停音乐播放（但不释放资源，以便返回时恢复）
+        if (musicPlayer != null) {
+            musicPlayer.pause();
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        // 当Activity完全不可见时暂停播放
+        if (musicPlayer != null) {
+            musicPlayer.pause();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // 只有在Activity被销毁时才释放播放器
+        if (isFinishing() && musicPlayer != null) {
+            musicPlayer.stop();
+            musicPlayer.release();
+        }
     }
 
     private void handleShare() {
@@ -529,5 +767,15 @@ public class PostDetailActivity extends AppCompatActivity {
             }
         }
         return null;
+    }
+
+    private void updateMuteButton() {
+        if (musicPlayer != null) {
+            if (musicPlayer.isMuted()) {
+                muteButton.setImageResource(R.drawable.ic_volume_off);
+            } else {
+                muteButton.setImageResource(R.drawable.ic_volume_up);
+            }
+        }
     }
 }

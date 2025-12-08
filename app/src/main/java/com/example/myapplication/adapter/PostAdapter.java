@@ -56,7 +56,9 @@ public class PostAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         this.posts = newPosts;
         notifyDataSetChanged();
     }
-
+    public List<Post> getPosts() {
+        return posts;
+    }
     public void showLoadingFooter(boolean show) {
         if (showFooter != show) {
             showFooter = show;
@@ -111,13 +113,13 @@ public class PostAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
 
     // 普通帖子视图持有者
-    class PostViewHolder extends RecyclerView.ViewHolder {
+    public class PostViewHolder extends RecyclerView.ViewHolder {
         private ImageView likeIcon;
         private TextView likeCount;
         private TextView postTitle;
         private TextView authorName;
         private ImageView authorAvatar;
-        private ImageView postImage;
+        public  ImageView postImage;
         private View likeButton;
         private int position;
         private Post currentPost;
@@ -161,6 +163,8 @@ public class PostAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             postTitle.setText(post.getTitle());
             authorName.setText(post.getAuthorName());
             likeCount.setText(String.valueOf(post.getLikeCount()));
+            // 设置图片过渡名称
+            postImage.setTransitionName("post_image_" + post.getPost_id());
 
             // 加载用户头像
             if (post.getAuthor() != null && post.getAuthor().getAvatar() != null && !post.getAuthor().getAvatar().isEmpty()) {
@@ -271,4 +275,6 @@ public class PostAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             super(itemView);
         }
     }
+
+
 }
