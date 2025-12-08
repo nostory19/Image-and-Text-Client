@@ -46,7 +46,9 @@ public class MainActivity extends AppCompatActivity {
         fragmentManager = getSupportFragmentManager();
 
         // 默认显示首页
-        switchFragment(new HomeFragment());
+//        switchFragment(new HomeFragment());
+        // 使用show/hide方式初始化首页，而不是replace
+        switchToHomeFragment();
 
         // 设置底部导航栏点击事件
         setTabClickListener();
@@ -108,11 +110,11 @@ public class MainActivity extends AppCompatActivity {
         bottomNavigation = findViewById(R.id.bottom_navigation);
     }
 
-    private void switchFragment(Fragment fragment) {
-        FragmentTransaction transaction = fragmentManager.beginTransaction();
-        transaction.replace(R.id.fragment_container, fragment);
-        transaction.commit();
-    }
+//    private void switchFragment(Fragment fragment) {
+//        FragmentTransaction transaction = fragmentManager.beginTransaction();
+//        transaction.replace(R.id.fragment_container, fragment);
+//        transaction.commit();
+//    }
 
     private void setTabClickListener() {
         // 设置首页点击事件
