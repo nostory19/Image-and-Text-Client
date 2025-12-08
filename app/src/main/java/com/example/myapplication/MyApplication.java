@@ -7,7 +7,7 @@ public class MyApplication extends Application {
     public void onCreate() {
         super.onCreate();
         // APP冷启动时重置音乐播放状态
-        MusicPlayerManager.getInstance(this).resetMuteState();
+        com.example.myapplication.MusicPlayerManager.getInstance(this).resetMuteState();
     }
 
     @Override
@@ -15,6 +15,6 @@ public class MyApplication extends Application {
         super.onTerminate();
 
         // 应用终止时释放音乐播放器
-        MusicPlayerManager.getInstance(this).release();
+        com.example.myapplication.MusicPlayerManager.getInstance(this).release();
     }
 }
