@@ -48,13 +48,10 @@ public class HomeFragment extends Fragment implements PostAdapter.OnPostClickLis
         // 初始化ViewModel
         viewModel = new ViewModelProvider(this).get(PostViewModel.class);
         // 在onCreate时就开始加载数据，而不是等到onCreateView完成
-        // 但是每次Fragment重新创建时，firstLoad都会被重置为true，导致数据重新加载
 //        if (firstLoad) {
 //            viewModel.refreshData();
-//            firstLoad = false;
 //        }
-        // 避免重复加载
-        if (savedInstanceState == null){
+        if (savedInstanceState == null) {
             viewModel.refreshData();
         }
     }

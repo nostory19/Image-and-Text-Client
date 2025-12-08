@@ -47,9 +47,7 @@ public class MainActivity extends AppCompatActivity {
 
         // 默认显示首页
 //        switchFragment(new HomeFragment());
-        // 使用show/hide方式初始化首页，而不是replace
         switchToHomeFragment();
-
         // 设置底部导航栏点击事件
         setTabClickListener();
     }
