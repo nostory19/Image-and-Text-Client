@@ -111,5 +111,6 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel:2.5.1")
     implementation("androidx.lifecycle:lifecycle-livedata:2.5.1")
     implementation("androidx.lifecycle:lifecycle-common-java8:2.5.1")
+    implementation("com.google.android.flexbox:flexbox:3.0.0")
 
 }

@@ -1,6 +1,7 @@
 package com.example.myapplication;
 
 import android.content.Intent;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,6 +16,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -91,15 +93,59 @@ public class HomeFragment extends Fragment implements PostAdapter.OnPostClickLis
         retryButton = view.findViewById(R.id.retry_button);
     }
 
+//    private void setupRecyclerView() {
+//        // 设置瀑布流布局管理器，2列
+//        StaggeredGridLayoutManager layoutManager = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
+//        recyclerView.setLayoutManager(layoutManager);
+//
+//        // 创建并设置适配器
+//        postAdapter = new PostAdapter(getContext(), new ArrayList<>(), viewModel, this);
+//        recyclerView.setAdapter(postAdapter);
+//
+//        // 延迟设置滚动监听器
+//        recyclerView.post(() -> {
+//            recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+//                @Override
+//                public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+//                    super.onScrolled(recyclerView, dx, dy);
+//
+//                    // 只有在向下滚动且不在加载状态且还有更多数据时才触发加载更多
+//                    if (dy > 0 && !viewModel.getIsLoadingLiveData().getValue() &&
+//                            viewModel.getHasMoreDataLiveData().getValue()) {
+//                        StaggeredGridLayoutManager layoutManager = (StaggeredGridLayoutManager) recyclerView.getLayoutManager();
+//                        if (layoutManager != null) {
+//                            int[] lastVisibleItemPositions = layoutManager.findLastVisibleItemPositions(null);
+//                            int lastVisibleItemPosition = getLastVisibleItem(lastVisibleItemPositions);
+//
+//                            // 当滑动到倒数第2个item时开始加载更多
+//                            if (lastVisibleItemPosition >= postAdapter.getItemCount() - 2) {
+//                                viewModel.loadMoreData();
+//                            }
+//                        }
+//                    }
+//                }
+//
+//                // 移除原来的onScrollStateChanged中的位置保存逻辑，因为我们现在在点击时立即保存
+//            });
+//        });
     private void setupRecyclerView() {
-        // 设置瀑布流布局管理器，2列
+        // 使用GridLayoutManager替代StaggeredGridLayoutManager
+//        GridLayoutManager layoutManager = new GridLayoutManager(getContext(), 2);
         StaggeredGridLayoutManager layoutManager = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
+        layoutManager.setGapStrategy(StaggeredGridLayoutManager.GAP_HANDLING_MOVE_ITEMS_BETWEEN_SPANS);
+        // 添加ItemDecoration来减少卡片移动
+        recyclerView.addItemDecoration(new RecyclerView.ItemDecoration() {
+            @Override
+            public void getItemOffsets(@NonNull Rect outRect, @NonNull View view,
+                                       @NonNull RecyclerView parent, @NonNull RecyclerView.State state) {
+                super.getItemOffsets(outRect, view, parent, state);
+                outRect.set(8, 8, 8, 8);
+            }
+        });
         recyclerView.setLayoutManager(layoutManager);
-
-        // 创建并设置适配器
+        // 设置适配器
         postAdapter = new PostAdapter(getContext(), new ArrayList<>(), viewModel, this);
         recyclerView.setAdapter(postAdapter);
-
         // 延迟设置滚动监听器
         recyclerView.post(() -> {
             recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
@@ -110,11 +156,12 @@ public class HomeFragment extends Fragment implements PostAdapter.OnPostClickLis
                     // 只有在向下滚动且不在加载状态且还有更多数据时才触发加载更多
                     if (dy > 0 && !viewModel.getIsLoadingLiveData().getValue() &&
                             viewModel.getHasMoreDataLiveData().getValue()) {
+//                        GridLayoutManager layoutManager = (GridLayoutManager) recyclerView.getLayoutManager();
                         StaggeredGridLayoutManager layoutManager = (StaggeredGridLayoutManager) recyclerView.getLayoutManager();
                         if (layoutManager != null) {
                             int[] lastVisibleItemPositions = layoutManager.findLastVisibleItemPositions(null);
+//                            int lastVisibleItemPosition = layoutManager.findLastVisibleItemPosition();
                             int lastVisibleItemPosition = getLastVisibleItem(lastVisibleItemPositions);
-
                             // 当滑动到倒数第2个item时开始加载更多
                             if (lastVisibleItemPosition >= postAdapter.getItemCount() - 2) {
                                 viewModel.loadMoreData();
@@ -122,10 +169,9 @@ public class HomeFragment extends Fragment implements PostAdapter.OnPostClickLis
                         }
                     }
                 }
-
-                // 移除原来的onScrollStateChanged中的位置保存逻辑，因为我们现在在点击时立即保存
             });
         });
+
         // 添加滚动监听，实现上滑加载更多
 //        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
 //            @Override
@@ -236,12 +282,20 @@ public class HomeFragment extends Fragment implements PostAdapter.OnPostClickLis
 
     // 获取最后一个可见item的位置
     private int getLastVisibleItem(int[] lastVisibleItemPositions) {
+//        int maxSize = 0;
+//        for (int i = 0; i < lastVisibleItemPositions.length; i++) {
+//            if (i == 0) {
+//                maxSize = lastVisibleItemPositions[i];
+//            } else if (lastVisibleItemPositions[i] > maxSize) {
+//                maxSize = lastVisibleItemPositions[i];
+//            }
+//        }
+//        return maxSize;
+
         int maxSize = 0;
-        for (int i = 0; i < lastVisibleItemPositions.length; i++) {
-            if (i == 0) {
-                maxSize = lastVisibleItemPositions[i];
-            } else if (lastVisibleItemPositions[i] > maxSize) {
-                maxSize = lastVisibleItemPositions[i];
+        for (int position : lastVisibleItemPositions) {
+            if (position > maxSize) {
+                maxSize = position;
             }
         }
         return maxSize;

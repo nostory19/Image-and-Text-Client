@@ -35,6 +35,7 @@ public class PostAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         void onPostClick(Post post);
     }
 
+
     public PostAdapter(Context context, List<Post> posts, PostViewModel viewModel, OnPostClickListener listener) {
         this.context = context;
         this.posts = posts;
@@ -43,6 +44,14 @@ public class PostAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         setHasStableIds(true);
     }
 
+    @Override
+    public long getItemId(int position) {
+        if (getItemViewType(position) == TYPE_FOOTER){
+            return RecyclerView.NO_ID;
+        }
+        // 使用帖子的唯一ID作为稳定ID
+        return posts.get(position).getPost_id().hashCode();
+    }
     public void updateData(List<Post> newPosts) {
         this.posts = newPosts;
         notifyDataSetChanged();
